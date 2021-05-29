@@ -1,25 +1,7 @@
-# 🏗 Solana App Scaffold
-Scaffolding for a dapp built on Solana
+# Circlepod-Protocol
+Circlepod Protocol is Podcast with NFT, create more interactivity and entertainment. Link fans and value through blockchain technology to form a good copyright and subscription ecosystem.
 
-# Quickstart
-
-```bash
-git clone https://github.com/solana-labs/dapp-scaffold.git
-
-cd dapp-scaffold
-```
-
-```bash
-
-yarn
-
-```
-
-```bash
-
-yarn start
-
-```
+[READ MORE](https://xiaorangetech.gitbook.io/circlepod-protocol/)
 
 # Environment Setup
 1. Install Rust from https://rustup.rs/
