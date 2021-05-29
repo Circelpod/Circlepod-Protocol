@@ -1,0 +1,40 @@
+{
+  "extends": "@tsconfig/recommended/tsconfig.json",
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
+  "compilerOptions": {
+    "declaration": true,
+    "moduleResolution": "node",
+    "module": "es2015",
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "downlevelIteration": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "typeRoots": [
+      "./types"
+    ],
+    "jsx": "react",
+    "isolatedModules": true
+  },
+  "include": [
+    "src",
+    "program/client"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
