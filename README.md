@@ -50,3 +50,7 @@ Generic react hooks to interact with token program:
 
 * home - main page for your app
 * faucet - airdrops SOL on Testnet and Devnet
+
+# TIPs
+
+`solana config set --url https://api.devnet.solana.com`

@@ -1564,10 +1564,10 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@project-serum/anchor@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.6.0.tgz#ebc9a338c6aaac8d4d70e2114b4e7eea0bd95da1"
-  integrity sha512-UFpz7WnvLJKl/Xt3IPj58qUL2l7LWSPix7gh4pq4bVRwkOfm29kT2UZjszMKtgjZaJ9wPgzFNuV/+fr5bZ2m1g==
+"@project-serum/anchor@0.6.1-beta.1":
+  version "0.6.1-beta.1"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.6.1-beta.1.tgz#0ef80d592b39b9f391aef6fb83e5d924968b99f5"
+  integrity sha512-bbgrP5MkpZgm+mveCxNfeCxNF1Kg1+D/+tj2UfofqczgIyLFnScGQ8dV8cJYm+Nl3WqIaHyCIuDdEHy0/EfH2A==
   dependencies:
     "@project-serum/borsh" "^0.2.2"
     "@solana/web3.js" "^1.11.0"
@@ -1589,6 +1589,24 @@
   resolved "https://registry.yarnpkg.com/@project-serum/borsh/-/borsh-0.2.2.tgz#63e558f2d6eb6ab79086bf499dea94da3182498f"
   integrity sha512-Ms+aWmGVW6bWd3b0+MWwoaYig2QD0F90h0uhr7AzY3dpCb5e2S6RsRW02vFTfa085pY2VLB7nTZNbFECQ1liTg==
   dependencies:
+    bn.js "^5.1.2"
+    buffer-layout "^1.2.0"
+
+"@project-serum/common@^0.0.1-beta.3":
+  version "0.0.1-beta.3"
+  resolved "https://registry.yarnpkg.com/@project-serum/common/-/common-0.0.1-beta.3.tgz#53586eaff9d9fd7e8938b1e12080c935b8b6ad07"
+  integrity sha512-gnQE/eUydTtto5okCgLWj1M97R9RRPJqnhKklikYI7jP/pnNhDmngSXC/dmfzED2GXSJEIKNIlxVw1k+E2Aw3w==
+  dependencies:
+    "@project-serum/serum" "^0.13.21"
+    bn.js "^5.1.2"
+    superstruct "0.8.3"
+
+"@project-serum/serum@^0.13.21":
+  version "0.13.38"
+  resolved "https://registry.yarnpkg.com/@project-serum/serum/-/serum-0.13.38.tgz#ef50a0f50bd69fd7b51309fbb44ad995a1e6e210"
+  integrity sha512-TOph1Hxoi5kOUg72tWbbNGviqBw29SrP4BH70gXtqUDiFTQJLrE2yfS5HC7p0JaU8p9WdrYGnxcFKCddZJ3ing==
+  dependencies:
+    "@solana/web3.js" "^0.90.0"
     bn.js "^5.1.2"
     buffer-layout "^1.2.0"
 
@@ -12431,6 +12449,14 @@ stylehacks@^4.0.0:
     browserslist "^4.0.0"
     postcss "^7.0.0"
     postcss-selector-parser "^3.0.0"
+
+superstruct@0.8.3:
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/superstruct/-/superstruct-0.8.3.tgz#fb4d8901aca3bf9f79afab1bbab7a7f335cc4ef2"
+  integrity sha512-LbtbFpktW1FcwxVIJlxdk7bCyBq/GzOx2FSFLRLTUhWIA1gHkYPIl3aXRG5mBdGZtnPNT6t+4eEcLDCMOuBHww==
+  dependencies:
+    kind-of "^6.0.2"
+    tiny-invariant "^1.0.6"
 
 superstruct@^0.14.2:
   version "0.14.2"

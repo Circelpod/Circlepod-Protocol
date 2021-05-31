@@ -3,4 +3,4 @@ cluster = "localnet"
 wallet = "/Users/yasuoyuhao/.config/solana/id.json"
 
 [clusters.localnet]
-circlepod_protocol = "7cWcZ8gewKy7pGXRKYJfiAYNyMSdfCavCvuEeMH5sswM"
+circlepod_protocol = "ERjoV1rrAxrXMcnUJ278ztgbhiaZYkaKJrdAnh2hy9Ar"
