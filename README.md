@@ -53,4 +53,16 @@ Generic react hooks to interact with token program:
 
 # TIPs
 
+切換部署環境
 `solana config set --url https://api.devnet.solana.com`
+`solana config set --url localhost`
+
+[本地區塊鏈 explorer](https://explorer.solana.com/?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899)
+
+如果你需要同步本地 validator，請使用下列指令(macos)，通常是需要 `ctx.accounts.clock.unix_timestamp`
+[文件](https://docs.solana.com/developing/test-validator)
+`rm -rf ~/test-ledger && solana-test-validator`
+
+查看目前 Solana cli 使用的錢包
+[文件](https://docs.solana.com/cli/transfer-tokens)
+`solana-keygen pubkey`

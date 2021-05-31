@@ -44,7 +44,10 @@
     "test": "cd contract && anchor test --skip-build",
     "eject": "react-scripts eject",
     "localnet:logs": "solana logs",
+    "switch:dev":"solana config set --url https://api.devnet.solana.com",
+    "switch:local":"solana config set --url localhost",
     "predeploy": "git pull --ff-only && yarn && yarn build",
+    "deploy": "yarn switch:dev && yarn deploy:solana && yarn switch:local",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
   "eslintConfig": {
