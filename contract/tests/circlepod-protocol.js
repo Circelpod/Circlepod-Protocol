@@ -1,13 +1,14 @@
-import { setProvider, Provider, workspace } from '@project-serum/anchor';
+const anchor = require("@project-serum/anchor");
+require('mocha');
 
 describe('e', () => {
 
   // Configure the client to use the local cluster.
-  setProvider(Provider.env());
+  anchor.setProvider(anchor.Provider.env());
 
   it('Is initialized!', async () => {
     // Add your test here.
-    const program = workspace.circlepodprotocol;
+    const program = anchor.workspace.CirclepodProtocol;
     const tx = await program.rpc.initialize();
     console.log("Your transaction signature", tx);
   });

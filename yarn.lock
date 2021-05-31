@@ -1564,10 +1564,10 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@project-serum/anchor@^0.6.1-beta.1":
-  version "0.6.1-beta.1"
-  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.6.1-beta.1.tgz#0ef80d592b39b9f391aef6fb83e5d924968b99f5"
-  integrity sha512-bbgrP5MkpZgm+mveCxNfeCxNF1Kg1+D/+tj2UfofqczgIyLFnScGQ8dV8cJYm+Nl3WqIaHyCIuDdEHy0/EfH2A==
+"@project-serum/anchor@^0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.6.0.tgz#ebc9a338c6aaac8d4d70e2114b4e7eea0bd95da1"
+  integrity sha512-UFpz7WnvLJKl/Xt3IPj58qUL2l7LWSPix7gh4pq4bVRwkOfm29kT2UZjszMKtgjZaJ9wPgzFNuV/+fr5bZ2m1g==
   dependencies:
     "@project-serum/borsh" "^0.2.2"
     "@solana/web3.js" "^1.11.0"
@@ -2071,10 +2071,15 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.5.tgz#e92d3b8f76583efa26c1a63a21c9d3c1143daa29"
   integrity sha512-H5Wn24s/ZOukBmDn03nnGTp18A60ny9AmCwnEcgJiTgSGsCO7k+NWP7zjCCbhlcnVCoI+co52dUAt9GMhOSULw==
 
-"@types/node@^12.12.54", "@types/node@^12.12.62":
+"@types/node@^12.12.54":
   version "12.19.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.19.2.tgz#9565ed5c72ba96038fc3add643edd5e7820598e7"
   integrity sha512-SRH6QM0IMOBBFmDiJ75vlhcbUEYEquvSuhsVW9ijG20JvdFTfOrB1p6ddZxz5y/JNnbf+9HoHhjhOVSX2hsJyA==
+
+"@types/node@^15.6.1":
+  version "15.6.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.6.1.tgz#32d43390d5c62c5b6ec486a9bc9c59544de39a08"
+  integrity sha512-7EIraBEyRHEe7CH+Fm1XvgqU6uwZN8Q7jppJGcqjROMT29qhAuuOxYB1uEY5UMYQKEmA5D+5tBnhdaPXSsLONA==
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"

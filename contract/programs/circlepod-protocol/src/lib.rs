@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[program]
-mod circlepodprotocol {
+mod circlepod_protocol {
     use super::*;
     pub fn initialize(_ctx: Context<Initialize>) -> ProgramResult {
         Ok(())

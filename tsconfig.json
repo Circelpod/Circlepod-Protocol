@@ -8,8 +8,9 @@
   "compilerOptions": {
     "declaration": true,
     "moduleResolution": "node",
-    "module": "es2015",
-    "target": "es2015",
+    "isolatedModules": false,
+    "module": "commonjs",
+    "target": "es2017",
     "lib": [
       "dom",
       "dom.iterable",
@@ -29,13 +30,12 @@
       "../node_modules/@types"
     ],
     "jsx": "react",
-    "isolatedModules": true,
   },
   "include": [
     "src",
-    "contract/tests"
+    "contract/client"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
   ]
 }
