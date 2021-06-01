@@ -1,398 +1,147 @@
-//! An IDO pool program implementing the Mango Markets token sale design here:
-//! https://docs.mango.markets/litepaper#token-sale.
-
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::program_option::COption;
-use anchor_spl::token::{self, Burn, Mint, MintTo, TokenAccount, Transfer};
+use anchor_spl::token::{self, Burn, MintTo, SetAuthority, Transfer};
 
 #[program]
 pub mod circlepod_protocol {
     use super::*;
 
-    #[access_control(InitializePool::accounts(&ctx, nonce) future_start_time(&ctx, start_ido_ts))]
-    pub fn initialize_pool(
-        ctx: Context<InitializePool>,
-        num_ido_tokens: u64,
-        nonce: u8,
-        start_ido_ts: i64,
-        end_deposits_ts: i64,
-        end_ido_ts: i64,
-    ) -> Result<()> {
-        if !(start_ido_ts < end_deposits_ts && end_deposits_ts < end_ido_ts) {
-            return Err(ErrorCode::SeqTimes.into());
-        }
-
-        let pool_account = &mut ctx.accounts.pool_account;
-        pool_account.redeemable_mint = *ctx.accounts.redeemable_mint.to_account_info().key;
-        pool_account.pool_watermelon = *ctx.accounts.pool_watermelon.to_account_info().key;
-        pool_account.watermelon_mint = ctx.accounts.pool_watermelon.mint;
-        pool_account.pool_usdc = *ctx.accounts.pool_usdc.to_account_info().key;
-        pool_account.distribution_authority = *ctx.accounts.distribution_authority.key;
-        pool_account.nonce = nonce;
-        pool_account.num_ido_tokens = num_ido_tokens;
-        pool_account.start_ido_ts = start_ido_ts;
-        pool_account.end_deposits_ts = end_deposits_ts;
-        pool_account.end_ido_ts = end_ido_ts;
-
-        // Transfer Watermelon from creator to pool account.
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.creator_watermelon.to_account_info(),
-            to: ctx.accounts.pool_watermelon.to_account_info(),
-            authority: ctx.accounts.distribution_authority.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.clone();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_ctx, num_ido_tokens)?;
-
-        Ok(())
+    pub fn proxy_transfer(ctx: Context<ProxyTransfer>, amount: u64) -> ProgramResult {
+        token::transfer(ctx.accounts.into(), amount)
     }
 
-    #[access_control(unrestricted_phase(&ctx))]
-    pub fn exchange_usdc_for_redeemable(
-        ctx: Context<ExchangeUsdcForRedeemable>,
-        amount: u64,
-    ) -> Result<()> {
-        // While token::transfer will check this, we prefer a verbose err msg.
-        if ctx.accounts.user_usdc.amount < amount {
-            return Err(ErrorCode::LowUsdc.into());
-        }
+    pub fn proxy_mint_to(ctx: Context<ProxyMintTo>, amount: u64) -> ProgramResult {
+        token::mint_to(ctx.accounts.into(), amount)
+    }
 
-        // Transfer user's USDC to pool USDC account.
+    pub fn proxy_burn(ctx: Context<ProxyBurn>, amount: u64) -> ProgramResult {
+        token::burn(ctx.accounts.into(), amount)
+    }
+
+    pub fn proxy_set_authority(
+        ctx: Context<ProxySetAuthority>,
+        authority_type: AuthorityType,
+        new_authority: Option<Pubkey>,
+    ) -> ProgramResult {
+        token::set_authority(ctx.accounts.into(), authority_type.into(), new_authority)
+    }
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub enum AuthorityType {
+    /// Authority to mint new tokens
+    MintTokens,
+    /// Authority to freeze any account associated with the Mint
+    FreezeAccount,
+    /// Owner of a given token account
+    AccountOwner,
+    /// Authority to close a token account
+    CloseAccount,
+}
+
+#[derive(Accounts)]
+pub struct ProxyTransfer<'info> {
+    #[account(signer)]
+    pub authority: AccountInfo<'info>,
+    #[account(mut)]
+    pub from: AccountInfo<'info>,
+    #[account(mut)]
+    pub to: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ProxyMintTo<'info> {
+    #[account(signer)]
+    pub authority: AccountInfo<'info>,
+    #[account(mut)]
+    pub mint: AccountInfo<'info>,
+    #[account(mut)]
+    pub to: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ProxyBurn<'info> {
+    #[account(signer)]
+    pub authority: AccountInfo<'info>,
+    #[account(mut)]
+    pub mint: AccountInfo<'info>,
+    #[account(mut)]
+    pub to: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ProxySetAuthority<'info> {
+    #[account(signer)]
+    pub current_authority: AccountInfo<'info>,
+    #[account(mut)]
+    pub account_or_mint: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+}
+
+impl<'a, 'b, 'c, 'info> From<&mut ProxyTransfer<'info>>
+    for CpiContext<'a, 'b, 'c, 'info, Transfer<'info>>
+{
+    fn from(accounts: &mut ProxyTransfer<'info>) -> CpiContext<'a, 'b, 'c, 'info, Transfer<'info>> {
         let cpi_accounts = Transfer {
-            from: ctx.accounts.user_usdc.to_account_info(),
-            to: ctx.accounts.pool_usdc.to_account_info(),
-            authority: ctx.accounts.user_authority.clone(),
+            from: accounts.from.clone(),
+            to: accounts.to.clone(),
+            authority: accounts.authority.clone(),
         };
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_ctx, amount)?;
+        let cpi_program = accounts.token_program.clone();
+        CpiContext::new(cpi_program, cpi_accounts)
+    }
+}
 
-        // Mint Redeemable to user Redeemable account.
-        let seeds = &[
-            ctx.accounts.pool_account.watermelon_mint.as_ref(),
-            &[ctx.accounts.pool_account.nonce],
-        ];
-        let signer = &[&seeds[..]];
+impl<'a, 'b, 'c, 'info> From<&mut ProxyMintTo<'info>>
+    for CpiContext<'a, 'b, 'c, 'info, MintTo<'info>>
+{
+    fn from(accounts: &mut ProxyMintTo<'info>) -> CpiContext<'a, 'b, 'c, 'info, MintTo<'info>> {
         let cpi_accounts = MintTo {
-            mint: ctx.accounts.redeemable_mint.to_account_info(),
-            to: ctx.accounts.user_redeemable.to_account_info(),
-            authority: ctx.accounts.pool_signer.clone(),
+            mint: accounts.mint.clone(),
+            to: accounts.to.clone(),
+            authority: accounts.authority.clone(),
         };
-        let cpi_program = ctx.accounts.token_program.clone();
-        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
-        token::mint_to(cpi_ctx, amount)?;
-
-        Ok(())
+        let cpi_program = accounts.token_program.clone();
+        CpiContext::new(cpi_program, cpi_accounts)
     }
+}
 
-    #[access_control(withdraw_only_phase(&ctx))]
-    pub fn exchange_redeemable_for_usdc(
-        ctx: Context<ExchangeRedeemableForUsdc>,
-        amount: u64,
-    ) -> Result<()> {
-        // While token::burn will check this, we prefer a verbose err msg.
-        if ctx.accounts.user_redeemable.amount < amount {
-            return Err(ErrorCode::LowRedeemable.into());
-        }
-
-        // Burn the user's redeemable tokens.
+impl<'a, 'b, 'c, 'info> From<&mut ProxyBurn<'info>> for CpiContext<'a, 'b, 'c, 'info, Burn<'info>> {
+    fn from(accounts: &mut ProxyBurn<'info>) -> CpiContext<'a, 'b, 'c, 'info, Burn<'info>> {
         let cpi_accounts = Burn {
-            mint: ctx.accounts.redeemable_mint.to_account_info(),
-            to: ctx.accounts.user_redeemable.to_account_info(),
-            authority: ctx.accounts.user_authority.to_account_info(),
+            mint: accounts.mint.clone(),
+            to: accounts.to.clone(),
+            authority: accounts.authority.clone(),
         };
-        let cpi_program = ctx.accounts.token_program.clone();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        token::burn(cpi_ctx, amount)?;
-
-        // Transfer USDC from pool account to user.
-        let seeds = &[
-            ctx.accounts.pool_account.watermelon_mint.as_ref(),
-            &[ctx.accounts.pool_account.nonce],
-        ];
-        let signer = &[&seeds[..]];
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.pool_usdc.to_account_info(),
-            to: ctx.accounts.user_usdc.to_account_info(),
-            authority: ctx.accounts.pool_signer.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.clone();
-        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
-        token::transfer(cpi_ctx, amount)?;
-
-        Ok(())
+        let cpi_program = accounts.token_program.clone();
+        CpiContext::new(cpi_program, cpi_accounts)
     }
+}
 
-    #[access_control(ido_over(&ctx.accounts.pool_account, &ctx.accounts.clock))]
-    pub fn exchange_redeemable_for_watermelon(
-        ctx: Context<ExchangeRedeemableForWatermelon>,
-        amount: u64,
-    ) -> Result<()> {
-        // While token::burn will check this, we prefer a verbose err msg.
-        if ctx.accounts.user_redeemable.amount < amount {
-            return Err(ErrorCode::LowRedeemable.into());
+impl<'a, 'b, 'c, 'info> From<&mut ProxySetAuthority<'info>>
+    for CpiContext<'a, 'b, 'c, 'info, SetAuthority<'info>>
+{
+    fn from(
+        accounts: &mut ProxySetAuthority<'info>,
+    ) -> CpiContext<'a, 'b, 'c, 'info, SetAuthority<'info>> {
+        let cpi_accounts = SetAuthority {
+            account_or_mint: accounts.account_or_mint.clone(),
+            current_authority: accounts.current_authority.clone(),
+        }; // TODO: Support multisig signers
+        let cpi_program = accounts.token_program.clone();
+        CpiContext::new(cpi_program, cpi_accounts)
+    }
+}
+
+impl From<AuthorityType> for spl_token::instruction::AuthorityType {
+    fn from(authority_ty: AuthorityType) -> spl_token::instruction::AuthorityType {
+        match authority_ty {
+            AuthorityType::MintTokens => spl_token::instruction::AuthorityType::MintTokens,
+            AuthorityType::FreezeAccount => spl_token::instruction::AuthorityType::FreezeAccount,
+            AuthorityType::AccountOwner => spl_token::instruction::AuthorityType::AccountOwner,
+            AuthorityType::CloseAccount => spl_token::instruction::AuthorityType::CloseAccount,
         }
-
-        // Calculate watermelon tokens due.
-        let watermelon_amount = (amount as u128)
-            .checked_mul(ctx.accounts.pool_watermelon.amount as u128)
-            .unwrap()
-            .checked_div(ctx.accounts.redeemable_mint.supply as u128)
-            .unwrap();
-
-        // Burn the user's redeemable tokens.
-        let cpi_accounts = Burn {
-            mint: ctx.accounts.redeemable_mint.to_account_info(),
-            to: ctx.accounts.user_redeemable.to_account_info(),
-            authority: ctx.accounts.user_authority.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.clone();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        token::burn(cpi_ctx, amount)?;
-
-        // Transfer Watermelon from pool account to user.
-        let seeds = &[
-            ctx.accounts.pool_account.watermelon_mint.as_ref(),
-            &[ctx.accounts.pool_account.nonce],
-        ];
-        let signer = &[&seeds[..]];
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.pool_watermelon.to_account_info(),
-            to: ctx.accounts.user_watermelon.to_account_info(),
-            authority: ctx.accounts.pool_signer.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.clone();
-        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
-        token::transfer(cpi_ctx, watermelon_amount as u64)?;
-
-        Ok(())
     }
-
-    #[access_control(ido_over(&ctx.accounts.pool_account, &ctx.accounts.clock))]
-    pub fn withdraw_pool_usdc(ctx: Context<WithdrawPoolUsdc>) -> Result<()> {
-        // Transfer total USDC from pool account to creator account.
-        let seeds = &[
-            ctx.accounts.pool_account.watermelon_mint.as_ref(),
-            &[ctx.accounts.pool_account.nonce],
-        ];
-        let signer = &[&seeds[..]];
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.pool_usdc.to_account_info(),
-            to: ctx.accounts.creator_usdc.to_account_info(),
-            authority: ctx.accounts.pool_signer.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.clone();
-        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
-        token::transfer(cpi_ctx, ctx.accounts.pool_usdc.amount)?;
-
-        Ok(())
-    }
-}
-
-#[derive(Accounts)]
-pub struct InitializePool<'info> {
-    #[account(init)]
-    pub pool_account: ProgramAccount<'info, PoolAccount>,
-    pub pool_signer: AccountInfo<'info>,
-    #[account(
-        "redeemable_mint.mint_authority == COption::Some(*pool_signer.key)",
-        "redeemable_mint.supply == 0"
-    )]
-    pub redeemable_mint: CpiAccount<'info, Mint>,
-    #[account("usdc_mint.decimals == redeemable_mint.decimals")]
-    pub usdc_mint: CpiAccount<'info, Mint>,
-    #[account(mut, "pool_watermelon.owner == *pool_signer.key")]
-    pub pool_watermelon: CpiAccount<'info, TokenAccount>,
-    #[account("pool_usdc.owner == *pool_signer.key")]
-    pub pool_usdc: CpiAccount<'info, TokenAccount>,
-    #[account(signer)]
-    pub distribution_authority: AccountInfo<'info>,
-    #[account(mut, "creator_watermelon.owner == *distribution_authority.key")]
-    pub creator_watermelon: CpiAccount<'info, TokenAccount>,
-    #[account("token_program.key == &token::ID")]
-    pub token_program: AccountInfo<'info>,
-    pub rent: Sysvar<'info, Rent>,
-    pub clock: Sysvar<'info, Clock>,
-}
-
-impl<'info> InitializePool<'info> {
-    fn accounts(ctx: &Context<InitializePool<'info>>, nonce: u8) -> Result<()> {
-        let expected_signer = Pubkey::create_program_address(
-            &[ctx.accounts.pool_watermelon.mint.as_ref(), &[nonce]],
-            ctx.program_id,
-        )
-        .map_err(|_| ErrorCode::InvalidNonce)?;
-        if ctx.accounts.pool_signer.key != &expected_signer {
-            return Err(ErrorCode::InvalidNonce.into());
-        }
-        Ok(())
-    }
-}
-
-#[derive(Accounts)]
-pub struct ExchangeUsdcForRedeemable<'info> {
-    #[account(has_one = redeemable_mint, has_one = pool_usdc)]
-    pub pool_account: ProgramAccount<'info, PoolAccount>,
-    #[account(seeds = [pool_account.watermelon_mint.as_ref(), &[pool_account.nonce]])]
-    pool_signer: AccountInfo<'info>,
-    #[account(
-        mut,
-        "redeemable_mint.mint_authority == COption::Some(*pool_signer.key)"
-    )]
-    pub redeemable_mint: CpiAccount<'info, Mint>,
-    #[account(mut, "pool_usdc.owner == *pool_signer.key")]
-    pub pool_usdc: CpiAccount<'info, TokenAccount>,
-    #[account(signer)]
-    pub user_authority: AccountInfo<'info>,
-    #[account(mut, "user_usdc.owner == *user_authority.key")]
-    pub user_usdc: CpiAccount<'info, TokenAccount>,
-    #[account(mut, "user_redeemable.owner == *user_authority.key")]
-    pub user_redeemable: CpiAccount<'info, TokenAccount>,
-    #[account("token_program.key == &token::ID")]
-    pub token_program: AccountInfo<'info>,
-    pub clock: Sysvar<'info, Clock>,
-}
-
-#[derive(Accounts)]
-pub struct ExchangeRedeemableForUsdc<'info> {
-    #[account(has_one = redeemable_mint, has_one = pool_usdc)]
-    pub pool_account: ProgramAccount<'info, PoolAccount>,
-    #[account(seeds = [pool_account.watermelon_mint.as_ref(), &[pool_account.nonce]])]
-    pool_signer: AccountInfo<'info>,
-    #[account(
-        mut,
-        "redeemable_mint.mint_authority == COption::Some(*pool_signer.key)"
-    )]
-    pub redeemable_mint: CpiAccount<'info, Mint>,
-    #[account(mut, "pool_usdc.owner == *pool_signer.key")]
-    pub pool_usdc: CpiAccount<'info, TokenAccount>,
-    #[account(signer)]
-    pub user_authority: AccountInfo<'info>,
-    #[account(mut, "user_usdc.owner == *user_authority.key")]
-    pub user_usdc: CpiAccount<'info, TokenAccount>,
-    #[account(mut, "user_redeemable.owner == *user_authority.key")]
-    pub user_redeemable: CpiAccount<'info, TokenAccount>,
-    #[account("token_program.key == &token::ID")]
-    pub token_program: AccountInfo<'info>,
-    pub clock: Sysvar<'info, Clock>,
-}
-
-#[derive(Accounts)]
-pub struct ExchangeRedeemableForWatermelon<'info> {
-    #[account(has_one = redeemable_mint, has_one = pool_watermelon)]
-    pub pool_account: ProgramAccount<'info, PoolAccount>,
-    #[account(seeds = [pool_account.watermelon_mint.as_ref(), &[pool_account.nonce]])]
-    pool_signer: AccountInfo<'info>,
-    #[account(
-        mut,
-        "redeemable_mint.mint_authority == COption::Some(*pool_signer.key)"
-    )]
-    pub redeemable_mint: CpiAccount<'info, Mint>,
-    #[account(mut, "pool_watermelon.owner == *pool_signer.key")]
-    pub pool_watermelon: CpiAccount<'info, TokenAccount>,
-    #[account(signer)]
-    pub user_authority: AccountInfo<'info>,
-    #[account(mut, "user_watermelon.owner == *user_authority.key")]
-    pub user_watermelon: CpiAccount<'info, TokenAccount>,
-    #[account(mut, "user_redeemable.owner == *user_authority.key")]
-    pub user_redeemable: CpiAccount<'info, TokenAccount>,
-    #[account("token_program.key == &token::ID")]
-    pub token_program: AccountInfo<'info>,
-    pub clock: Sysvar<'info, Clock>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawPoolUsdc<'info> {
-    #[account(has_one = pool_usdc, has_one = distribution_authority)]
-    pub pool_account: ProgramAccount<'info, PoolAccount>,
-    #[account(seeds = [pool_account.watermelon_mint.as_ref(), &[pool_account.nonce]])]
-    pub pool_signer: AccountInfo<'info>,
-    #[account(mut, "pool_usdc.owner == *pool_signer.key")]
-    pub pool_usdc: CpiAccount<'info, TokenAccount>,
-    #[account(signer)]
-    pub distribution_authority: AccountInfo<'info>,
-    #[account(mut, "creator_usdc.owner == *distribution_authority.key")]
-    pub creator_usdc: CpiAccount<'info, TokenAccount>,
-    #[account("token_program.key == &token::ID")]
-    pub token_program: AccountInfo<'info>,
-    pub clock: Sysvar<'info, Clock>,
-}
-
-#[account]
-pub struct PoolAccount {
-    pub redeemable_mint: Pubkey,
-    pub pool_watermelon: Pubkey,
-    pub watermelon_mint: Pubkey,
-    pub pool_usdc: Pubkey,
-    pub distribution_authority: Pubkey,
-    pub nonce: u8,
-    pub num_ido_tokens: u64,
-    pub start_ido_ts: i64,
-    pub end_deposits_ts: i64,
-    pub end_ido_ts: i64,
-}
-
-#[error]
-pub enum ErrorCode {
-    #[msg("IDO must start in the future")]
-    IdoFuture,
-    #[msg("IDO times are non-sequential")]
-    SeqTimes,
-    #[msg("IDO has not started")]
-    StartIdoTime,
-    #[msg("Deposits period has ended")]
-    EndDepositsTime,
-    #[msg("IDO has ended")]
-    EndIdoTime,
-    #[msg("IDO has not finished yet")]
-    IdoNotOver,
-    #[msg("Insufficient USDC")]
-    LowUsdc,
-    #[msg("Insufficient redeemable tokens")]
-    LowRedeemable,
-    #[msg("USDC total and redeemable total don't match")]
-    UsdcNotEqRedeem,
-    #[msg("Given nonce is invalid")]
-    InvalidNonce,
-}
-
-// Access control modifiers.
-
-// Asserts the IDO starts in the future.
-fn future_start_time<'info>(ctx: &Context<InitializePool<'info>>, start_ido_ts: i64) -> Result<()> {
-    if !(ctx.accounts.clock.unix_timestamp < start_ido_ts) {
-        return Err(ErrorCode::IdoFuture.into());
-    }
-    Ok(())
-}
-
-// Asserts the IDO is in the first phase.
-fn unrestricted_phase<'info>(ctx: &Context<ExchangeUsdcForRedeemable<'info>>) -> Result<()> {
-    if !(ctx.accounts.pool_account.start_ido_ts < ctx.accounts.clock.unix_timestamp) {
-        return Err(ErrorCode::StartIdoTime.into());
-    } else if !(ctx.accounts.clock.unix_timestamp < ctx.accounts.pool_account.end_deposits_ts) {
-        return Err(ErrorCode::EndDepositsTime.into());
-    }
-    Ok(())
-}
-
-// Asserts the IDO is in the second phase.
-fn withdraw_only_phase(ctx: &Context<ExchangeRedeemableForUsdc>) -> Result<()> {
-    if !(ctx.accounts.pool_account.start_ido_ts < ctx.accounts.clock.unix_timestamp) {
-        return Err(ErrorCode::StartIdoTime.into());
-    } else if !(ctx.accounts.clock.unix_timestamp < ctx.accounts.pool_account.end_ido_ts) {
-        return Err(ErrorCode::EndIdoTime.into());
-    }
-    Ok(())
-}
-
-// Asserts the IDO sale period has ended, based on the current timestamp.
-fn ido_over<'info>(
-    pool_account: &ProgramAccount<'info, PoolAccount>,
-    clock: &Sysvar<'info, Clock>,
-) -> Result<()> {
-    if !(pool_account.end_ido_ts < clock.unix_timestamp) {
-        return Err(ErrorCode::IdoNotOver.into());
-    }
-    Ok(())
 }
