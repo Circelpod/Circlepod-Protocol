@@ -1,6 +1,8 @@
 [provider]
 cluster = "localnet"
-wallet = "/Users/yasuoyuhao/.config/solana/id.json"
+wallet = "~/.config/solana/id.json"
 
 [clusters.localnet]
-circlepod_protocol = "6B5GAMoB8rNiri5BRDUuquJ6onzaWYmqzBm6skyodvS5"
+circlepod_protocol = "JAJx8YQ9VzLMPVxWGSWyzJBZhdhp8HH43y1g27PJttWH"
+staking_lockup = "DLePRXaXLQo3PDZVH6jV1mBzTvAfmry5kN7R8WKiDV9L"
+staking_registry = "FHmHR9PWcLb7NjLeKUMTkvKwkr4TLVVzERZErcfqzQSx"

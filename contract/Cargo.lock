@@ -736,13 +736,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
 
 [[package]]
-name = "lockup"
-version = "0.1.0"
-dependencies = [
- "anchor-lang 0.6.0",
-]
-
-[[package]]
 name = "log"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1187,10 +1180,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "staking-lockup"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang 0.7.0",
+ "anchor-spl",
+]
+
+[[package]]
 name = "staking-registry"
 version = "0.1.0"
 dependencies = [
- "anchor-lang 0.6.0",
+ "anchor-lang 0.7.0",
+ "anchor-spl",
+ "staking-lockup",
 ]
 
 [[package]]

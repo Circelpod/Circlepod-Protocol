@@ -15,4 +15,6 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.6.0"
+anchor-lang = "0.7.0"
+anchor-spl = "0.7.0"
+staking-lockup = { path = "../staking-lockup", features = ["cpi"] }

@@ -11,13 +11,6 @@ Circlepod Protocol is Podcast with NFT, create more interactivity and entertainm
 3. Install Node
 4. Install NPM, Yarn
 
-# Build Smart Contract (compiled for BPF)
-Run the following from the program/ subdirectory:
-
-```bash
-$ cargo build-bpf
-$ cargo test-bpf
-```
 # Directory structure
 
 ## program
@@ -52,6 +45,17 @@ Generic react hooks to interact with token program:
 
 * home - main page for your app
 * faucet - airdrops SOL on Testnet and Devnet
+
+## Contract
+
+> 使用 `yarn lanch` 可以快速建立環境，建置與部署。
+
+### Tests
+
+`lockup.js`
+lockup.js 是對於合約 `staking-lockup` 與 `staking-registry` 的整合測試，可以使用指令 `yarn test:lockup` 執行。其中如果是第一次執行需要把 `Deletes the default whitelisted addresses` 測試項目打開。
+
+> 執行前記得先部署合約或使用 `yarn lanch`
 
 # TIPs
 
