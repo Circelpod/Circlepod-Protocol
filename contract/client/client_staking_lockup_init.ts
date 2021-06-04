@@ -5,6 +5,14 @@ import path from 'path';
 
 // if you deploy first, Pleace Run it with yarn start:devdapp:client:lockup:init
 async function main() {
+
+    // await lockupInit();
+
+    console.log('success!');
+}
+
+async function lockupInit() {
+
     // Read the generated IDL.
     const idl = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'target/idl/staking_lockup.json'), 'utf8'));
 
@@ -22,7 +30,6 @@ async function main() {
     //     authority: provider.wallet.publicKey,
     //   },
     // });
-
     const lockupAddress = program.state.address();
     console.log(`lockupAddress: ${lockupAddress.toString()}`);
 
@@ -35,10 +42,8 @@ async function main() {
             accounts: {
                 authority: provider.wallet.publicKey,
             },
-        })
+        });
     }
-
-    console.log('success!');
 }
 
 main().then(

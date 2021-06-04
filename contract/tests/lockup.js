@@ -29,6 +29,7 @@ describe("Lockup and Registry", () => {
     god = _god;
   });
 
+  // first only
   it("Is initialized!", async () => {
     // await lockup.state.rpc.new({
     //   accounts: {
@@ -47,6 +48,26 @@ describe("Lockup and Registry", () => {
   });
 
   // first only
+  it("Initializes registry's global state", async () => {
+    // first only
+    // await registry.state.rpc.new({
+    //   accounts: { lockupProgram: lockup.programId },
+    // });
+
+    const state = await registry.state.fetch();
+    assert.ok(state.lockupProgram.equals(lockup.programId));
+
+    // Should not allow a second initializatoin.
+    await assert.rejects(
+      async () => {
+        await registry.state.rpc.new(lockup.programId);
+      },
+      (err) => {
+        return true;
+      }
+    );
+  });
+
   // it("Deletes the default whitelisted addresses", async () => {
   //   const defaultEntry = { programId: new anchor.web3.PublicKey() };
   //   await lockup.state.rpc.whitelistDelete(defaultEntry, {
@@ -266,26 +287,6 @@ describe("Lockup and Registry", () => {
       registrarSigner = _registrarSigner;
       nonce = _nonce;
       poolMint = await serumCmn.createMint(provider, registrarSigner);
-    });
-
-    it("Initializes registry's global state", async () => {
-      // first only
-      await registry.state.rpc.new({
-        accounts: { lockupProgram: lockup.programId },
-      });
-
-      const state = await registry.state.fetch();
-      assert.ok(state.lockupProgram.equals(lockup.programId));
-
-      // Should not allow a second initializatoin.
-      await assert.rejects(
-        async () => {
-          await registry.state.rpc.new(lockup.programId);
-        },
-        (err) => {
-          return true;
-        }
-      );
     });
 
     it("Initializes the registrar", async () => {
