@@ -8,7 +8,7 @@ async function main() {
     const idl = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'target/idl/staking_lockup.json'), 'utf8'));
 
     // Address of the deployed program.
-    const programId = new anchor.web3.PublicKey('DLePRXaXLQo3PDZVH6jV1mBzTvAfmry5kN7R8WKiDV9L');
+    const programId = new anchor.web3.PublicKey('2FazJNXz1dMoaRRBJSxEieifYnKwhZDKmoYd3uyH3iha');
 
     const provider = anchor.Provider.local();
     anchor.setProvider(provider);
@@ -19,7 +19,7 @@ async function main() {
     const lockupAddress = program.state.address();
     console.log(`lockupAddress: ${lockupAddress.toString()}`);
 
-    let lockupAccount: any = await program.state.fetch();
+    const lockupAccount: any = await program.state.fetch();
     console.log(`lockupAccount: ${(lockupAccount.authority as PublicKey).toString()}`);
 
     lockupAccount.whitelist.forEach((e: any) => {

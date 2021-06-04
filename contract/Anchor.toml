@@ -3,6 +3,6 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [clusters.localnet]
-circlepod_protocol = "JAJx8YQ9VzLMPVxWGSWyzJBZhdhp8HH43y1g27PJttWH"
-staking_lockup = "DLePRXaXLQo3PDZVH6jV1mBzTvAfmry5kN7R8WKiDV9L"
-staking_registry = "FHmHR9PWcLb7NjLeKUMTkvKwkr4TLVVzERZErcfqzQSx"
+circlepod_protocol = "G4zExjnm1CTk5KW46i96a4Hr1wpbhDGDZKuE74TpmbSS"
+staking_lockup = "6eJH7ZoWui9wnvhTwDem2C2zMh6RZ9Dtc39EA9stYq8x"
+staking_registry = "2vR8HyXLWJDWi81rfh7AxPNi5auSA8ZSxRPiFjYEVc7x"

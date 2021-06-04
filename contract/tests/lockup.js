@@ -270,9 +270,9 @@ describe("Lockup and Registry", () => {
 
     it("Initializes registry's global state", async () => {
       // first only
-      // await registry.state.rpc.new({
-      //   accounts: { lockupProgram: lockup.programId },
-      // });
+      await registry.state.rpc.new({
+        accounts: { lockupProgram: lockup.programId },
+      });
 
       const state = await registry.state.fetch();
       assert.ok(state.lockupProgram.equals(lockup.programId));
