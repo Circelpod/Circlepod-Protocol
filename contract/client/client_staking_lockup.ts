@@ -17,7 +17,7 @@ async function main() {
 
     // initialized!
     // await initLockupAccounts(program, provider);
-    
+
     // DefaultEntry WhitelistDelete 
     // await deleteDefaultEntry(program, provider);
 
@@ -39,7 +39,15 @@ async function main() {
 
     // await stakesFromMemberByUnlocked(provider, program);
 
-    await dropsUnlockedReward(provider, program);
+    // await dropsUnlockedReward(provider, program);
+
+    // await collectsUnlockedReward(provider, program);
+
+    // await unstakes(provider, program);
+
+    // await unstakeFinalizes(provider, program);
+
+    await withdrawsDeposits(provider, program);
 
     console.log('success!');
 }
@@ -52,13 +60,195 @@ main().then(
     },
 );
 
-async function dropsUnlockedReward(provider: anchor.Provider, program: anchor.Program) {
-    console.log(`-----Start Drops an unlocked reward-----`);
+async function withdrawsDeposits(provider: anchor.Provider, program: anchor.Program) {
+    const registry = getRegistryProgram(provider);
+
+    const [mint, registrar, member, memberAccount, memberSigner] = await unstakeFinalizes(provider, program);
+
+    console.log(`-----Start Withdraws deposits (unlocked)-----`);
+
+    const token = await serumCmn.createTokenAccount(
+        provider,
+        mint,
+        provider.wallet.publicKey
+    );
+    const withdrawAmount = new anchor.BN(100);
+    await registry.rpc.withdraw(withdrawAmount, {
+        accounts: {
+            registrar: registrar.publicKey,
+            member: member.publicKey,
+            beneficiary: provider.wallet.publicKey,
+            vault: memberAccount.balances.vault,
+            memberSigner,
+            depositor: token,
+            tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+        },
+    });
+
+    const tokenAccount = await serumCmn.getTokenAccount(provider, token);
+    console.log(`tokenAccount: ${tokenAccount.amount}`);
+    
+    console.log(`-----End Withdraws deposits (unlocked)-----`);
+}
+
+async function unstakeFinalizes(provider: anchor.Provider, program: anchor.Program): Promise<[PublicKey, Keypair, Keypair, any, PublicKey]> {
+    const registry = getRegistryProgram(provider);
+
+    const [registrar, member, pendingWithdrawal, balances, memberSigner, memberAccount, mint] = await unstakes(provider, program);
+
+    await serumCmn.sleep(5000);
+
+    console.log(`-----Start Unstake finalizes (unlocked)-----`);
+
+    await registry.rpc.endUnstake({
+        accounts: {
+            registrar: registrar.publicKey,
+
+            member: member.publicKey,
+            beneficiary: provider.wallet.publicKey,
+            pendingWithdrawal: pendingWithdrawal.publicKey,
+
+            vault: balances.vault,
+            vaultPw: balances.vaultPw,
+
+            memberSigner,
+
+            clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+            tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+        },
+    });
+
+    const vault = await serumCmn.getTokenAccount(
+        provider,
+        memberAccount.balances.vault
+    );
+    const vaultPw = await serumCmn.getTokenAccount(
+        provider,
+        memberAccount.balances.vaultPw
+    );
+
+    console.log(`vault.amount: ${vault.amount}`);
+    console.log(`vaultPw.amount: ${vaultPw.amount}`);
+
+    console.log(`-----End Unstake finalizes (unlocked)-----`);
+
+    return [mint, registrar, member, memberAccount, memberSigner];
+}
+
+async function unstakes(provider: anchor.Provider, program: anchor.Program): Promise<[Keypair, Keypair, Keypair, any, PublicKey, any, PublicKey]> {
+
+    const [registrar, rewardQ, poolMint, member, balances, balancesLocked, memberSigner, memberAccount, mint] = await collectsUnlockedReward(provider, program);
+
+    console.log(`-----Start Unstakes (unlocked)-----`);
+
+    const registry = getRegistryProgram(provider);
+
+    await collectsUnlockedReward(provider, program);
+
+    const unstakeAmount = new anchor.BN(10);
+
+    const pendingWithdrawal = anchor.web3.Keypair.generate();
+
+    await registry.rpc.startUnstake(unstakeAmount, false, {
+        accounts: {
+            registrar: registrar.publicKey,
+            rewardEventQ: rewardQ.publicKey,
+            poolMint,
+
+            pendingWithdrawal: pendingWithdrawal.publicKey,
+            member: member.publicKey,
+            beneficiary: provider.wallet.publicKey,
+            balances,
+            balancesLocked,
+
+            memberSigner,
+
+            tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+            clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [pendingWithdrawal],
+        instructions: [
+            await registry.account.pendingWithdrawal.createInstruction(
+                pendingWithdrawal
+            ),
+        ],
+    });
+
+    const vaultPw = await serumCmn.getTokenAccount(
+        provider,
+        memberAccount.balances.vaultPw
+    );
+    const vaultStake = await serumCmn.getTokenAccount(
+        provider,
+        memberAccount.balances.vaultStake
+    );
+    const spt = await serumCmn.getTokenAccount(
+        provider,
+        memberAccount.balances.spt
+    );
+
+    console.log(`vaultPw.amount: ${vaultPw.amount}`);
+    console.log(`vaultStake.amount: ${vaultStake.amount}`);
+    console.log(`spt: ${spt.amount}`);
+
+    console.log(`-----End Unstakes (unlocked)-----`);
+
+    return [registrar, member, pendingWithdrawal, balances, memberSigner, memberAccount, mint]
+}
+
+async function collectsUnlockedReward(provider: anchor.Provider, program: anchor.Program): Promise<[Keypair, Keypair, PublicKey, Keypair, any, any, PublicKey, any, PublicKey]> {
+    const registry = getRegistryProgram(provider);
+
+    const [mint, registrar, member, balances, balancesLocked, unlockedVendor, unlockedVendorVault, unlockedVendorSigner, rewardQ, poolMint, memberSigner] = await dropsUnlockedReward(provider, program);
+
+    console.log(`-----Start Collects an unlocked reward-----`);
+
+    const token = await serumCmn.createTokenAccount(
+        provider,
+        mint,
+        provider.wallet.publicKey
+    );
+    await registry.rpc.claimReward({
+        accounts: {
+            to: token,
+            cmn: {
+                registrar: registrar.publicKey,
+
+                member: member.publicKey,
+                beneficiary: provider.wallet.publicKey,
+                balances,
+                balancesLocked,
+
+                vendor: unlockedVendor.publicKey,
+                vault: unlockedVendorVault.publicKey,
+                vendorSigner: unlockedVendorSigner,
+
+                tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+                clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+            },
+        },
+    });
+
+    const tokenAccount = await serumCmn.getTokenAccount(provider, token);
+    console.log(`tokenAccount.amount: ${tokenAccount.amount}`);
+
+    const memberAccount: any = await registry.account.member.fetch(member.publicKey);
+    console.log(`memberAccount.rewardsCursor: ${memberAccount.rewardsCursor}`);
+
+    console.log(`-----End Collects an unlocked reward-----`);
+
+    return [registrar, rewardQ, poolMint, member, balances, balancesLocked, memberSigner, memberAccount, mint]
+}
+
+async function dropsUnlockedReward(provider: anchor.Provider, program: anchor.Program): Promise<[PublicKey, Keypair, Keypair, any, any, Keypair, Keypair, PublicKey, Keypair, PublicKey, PublicKey]> {
     const registry = getRegistryProgram(provider);
     const unlockedVendor = anchor.web3.Keypair.generate();
     const unlockedVendorVault = anchor.web3.Keypair.generate();
 
-    const [registrar, rewardQ, poolMint, tokenAccount, mint] = await stakesFromMemberByUnlocked(provider, program);
+    const [registrar, rewardQ, poolMint, tokenAccount, mint, member, balances, balancesLocked, memberSigner] = await stakesFromMemberByUnlocked(provider, program);
+
+    console.log(`-----Start Drops an unlocked reward-----`);
 
     const rewardKind = {
         unlocked: {},
@@ -134,13 +324,15 @@ async function dropsUnlockedReward(provider: anchor.Provider, program: anchor.Pr
     console.log(`e.locked: ${e.locked}`);
 
     console.log(`-----End Drops an unlocked reward-----`);
+
+    return [mint, registrar, member, balances, balancesLocked, unlockedVendor, unlockedVendorVault, unlockedVendorSigner, rewardQ, poolMint, memberSigner]
 }
 
-async function stakesFromMemberByUnlocked(provider: anchor.Provider, program: anchor.Program): Promise<[Keypair, Keypair, PublicKey, PublicKey, PublicKey]> {
-
-    console.log(`-----Start Stakes From Member By Unlocked-----`);
+async function stakesFromMemberByUnlocked(provider: anchor.Provider, program: anchor.Program): Promise<[Keypair, Keypair, PublicKey, PublicKey, PublicKey, Keypair, any, any, PublicKey]> {
 
     const [registrar, rewardQ, poolMint, member, balances, balancesLocked, memberSigner, registrarSigner, memberAccount, tokenAccount, mint] = await depositsUnlockedMemberByUnlocked(provider, program);
+
+    console.log(`-----Start Stakes From Member By Unlocked-----`);
 
     const registry = getRegistryProgram(provider);
     const stakeAmount = new anchor.BN(10);
@@ -183,14 +375,15 @@ async function stakesFromMemberByUnlocked(provider: anchor.Provider, program: an
 
     console.log(`-----End Stakes From Member By Unlocked-----`);
 
-    return [registrar, rewardQ, poolMint, tokenAccount, mint];
+    return [registrar, rewardQ, poolMint, tokenAccount, mint, member, balances, balancesLocked, memberSigner];
 }
 
 async function depositsUnlockedMemberByUnlocked(provider: anchor.Provider, program: anchor.Program): Promise<[Keypair, Keypair, PublicKey, Keypair, any, any, PublicKey, PublicKey, any, PublicKey, PublicKey]> {
 
+    const [memberAccount, member, tokenAccount, registrar, rewardQ, poolMint, balances, balancesLocked, memberSigner, registrarSigner, mint] = await createsMember(provider, program);
+
     console.log(`-----Start Deposits Unlocked Member By Unlocked-----`);
 
-    const [memberAccount, member, tokenAccount, registrar, rewardQ, poolMint, balances, balancesLocked, memberSigner, registrarSigner, mint] = await createsMember(provider, program);
     const registry = getRegistryProgram(provider);
 
     const depositAmount = new anchor.BN(120);
@@ -219,10 +412,11 @@ async function depositsUnlockedMemberByUnlocked(provider: anchor.Provider, progr
 
 async function createsMember(provider: anchor.Provider, program: anchor.Program): Promise<[any, Keypair, PublicKey, Keypair, Keypair, PublicKey, any, any, PublicKey, PublicKey, PublicKey]> {
 
-    console.log(`-----Start Creates Member-----`);
-
     const registry = getRegistryProgram(provider);
     const [registrar, registrarAccount, tokenAccount, rewardQ, poolMint, registrarSigner, mint] = await initializesRegistrar(provider, program);
+
+    console.log(`-----Start Creates Member-----`);
+
     const member = anchor.web3.Keypair.generate();
 
     const [
@@ -287,13 +481,13 @@ async function createsMember(provider: anchor.Provider, program: anchor.Program)
 
 async function initializesRegistrar(provider: anchor.Provider, program: anchor.Program): Promise<[Keypair, any, PublicKey, Keypair, PublicKey, PublicKey, PublicKey]> {
 
-    console.log(`-----Start Initializes Registrar-----`);
-
     const registry = getRegistryProgram(provider);
 
     const [mint, vesting, vestingAccount, vestingSigner, tokenAccount] = await createsVestingAccount(provider, program);
 
     const [poolMint, nonce, registrar, registrarSigner] = await createsRegistryGenesis(registry, provider);
+    
+    console.log(`-----Start Initializes Registrar-----`);
 
     const stakeRate = new anchor.BN(2);
     const rewardQLen = 170;
@@ -376,10 +570,10 @@ async function createsRegistryGenesis(registry: anchor.Program, provider: anchor
 }
 
 async function withdrawsFromVestingAccount(provider: anchor.Provider, program: anchor.Program) {
-    
-    console.log(`-----Start Withdraws From Vesting Account-----`);
 
     const [mint, vesting, vestingAccount, vestingSigner] = await createsVestingAccount(provider, program);
+
+    console.log(`-----Start Withdraws From Vesting Account-----`);
 
     await serumCmn.sleep(10 * 1000);
 
@@ -418,9 +612,10 @@ async function withdrawsFromVestingAccount(provider: anchor.Provider, program: a
 // eslint-disable-next-line @typescript-eslint/ban-types
 async function createsVestingAccount(provider: anchor.Provider, program: anchor.Program): Promise<[anchor.web3.PublicKey, anchor.web3.PublicKey, any, anchor.web3.PublicKey, anchor.web3.PublicKey]> {
 
-    console.log(`-----Start Creates Vesting Account-----`);
-    
     const [mint, account] = await createMintAndValut(provider);
+    
+    console.log(`-----Start Creates Vesting Account-----`);
+
     const vesting = anchor.web3.Keypair.generate();
 
     const startTs = new anchor.BN(Date.now() / 1000);

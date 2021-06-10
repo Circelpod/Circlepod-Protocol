@@ -6,7 +6,7 @@ import path from 'path';
 // if you deploy first, Pleace Run it with yarn start:devdapp:client:lockup:init
 async function main() {
 
-    // await lockupInit();
+    await lockupInit();
 
     console.log('success!');
 }
