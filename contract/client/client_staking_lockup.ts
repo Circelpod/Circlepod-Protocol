@@ -1,9 +1,6 @@
 import * as anchor from '@project-serum/anchor';
 import { getLockupInfo, initLockupAccounts, deleteDefaultEntry, deleteAllWhitelist, setAuthority, createMintAndValut, createsVestingAccount, withdrawsFromVestingAccount, initializesRegistrar, createsMember, stakesFromMemberByUnlocked, dropsUnlockedReward, collectsUnlockedReward, unstakes, unstakeFinalizes, withdrawsDeposits } from './lockup_utils';
 
-export const LOCKUP_Program_ID = '6eJH7ZoWui9wnvhTwDem2C2zMh6RZ9Dtc39EA9stYq8x';
-export const REGISTRY_Program_ID = '2vR8HyXLWJDWi81rfh7AxPNi5auSA8ZSxRPiFjYEVc7x';
-
 async function main() {
 
     const provider = anchor.Provider.local();

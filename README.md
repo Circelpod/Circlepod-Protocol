@@ -50,6 +50,12 @@ Generic react hooks to interact with token program:
 
 > 使用 `yarn lanch` 可以快速建立環境，建置與部署。
 
+### SPL Token use
+
+`spl-token mint 4CbuRj5io3PmQTEorMzxGLivrmNNiJdxo7QUtTfV4aCT 1000`
+
+`spl-token transfer --fund-recipient 4CbuRj5io3PmQTEorMzxGLivrmNNiJdxo7QUtTfV4aCT 500 DWAGPSj9h1ds2ezvwegnwCHiVzPhAHoBNthPMo6G17hE`
+
 ### Tests
 
 `lockup.js`

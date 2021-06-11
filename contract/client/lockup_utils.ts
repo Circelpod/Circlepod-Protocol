@@ -5,7 +5,9 @@ import path from 'path';
 import * as serumCmn from "@project-serum/common";
 import { TokenInstructions } from '@project-serum/serum';
 import { SendTxRequest } from '@project-serum/common';
-import { REGISTRY_Program_ID, LOCKUP_Program_ID } from './client_staking_lockup';
+
+export const LOCKUP_Program_ID = '6eJH7ZoWui9wnvhTwDem2C2zMh6RZ9Dtc39EA9stYq8x';
+export const REGISTRY_Program_ID = '2vR8HyXLWJDWi81rfh7AxPNi5auSA8ZSxRPiFjYEVc7x';
 
 export async function withdrawsDeposits(provider: anchor.Provider, program: anchor.Program) {
     const registry = getRegistryProgram(provider);
@@ -480,7 +482,7 @@ export async function initializesRegistrar(provider: anchor.Provider, program: a
     return [registrar, registrarAccount, tokenAccount, rewardQ, poolMint, registrarSigner, mint];
 }
 
-function getRegistryProgram(provider: anchor.Provider) {
+export function getRegistryProgram(provider: anchor.Provider) {
 
     // Read the generated IDL.
     const idl = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'target/idl/staking_registry.json'), 'utf8'));
@@ -555,6 +557,7 @@ export async function withdrawsFromVestingAccount(provider: anchor.Provider, pro
     const tokenAccount = await serumCmn.getTokenAccount(provider, token);
     console.log(`Token Account Amount: ${tokenAccount.amount.toNumber()}`);
 }
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 export async function createsVestingAccount(provider: anchor.Provider, program: anchor.Program): Promise<[anchor.web3.PublicKey, anchor.web3.PublicKey, any, anchor.web3.PublicKey, anchor.web3.PublicKey]> {
 
