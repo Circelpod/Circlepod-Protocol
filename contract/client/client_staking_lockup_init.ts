@@ -30,6 +30,7 @@ async function lockupInit() {
     //     authority: provider.wallet.publicKey,
     //   },
     // });
+
     const lockupAddress = program.state.address();
     console.log(`lockupAddress: ${lockupAddress.toString()}`);
 

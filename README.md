@@ -52,9 +52,22 @@ Generic react hooks to interact with token program:
 
 ### SPL Token use
 
-`spl-token mint 4CbuRj5io3PmQTEorMzxGLivrmNNiJdxo7QUtTfV4aCT 1000`
+`spl-token create-token`
 
-`spl-token transfer --fund-recipient 4CbuRj5io3PmQTEorMzxGLivrmNNiJdxo7QUtTfV4aCT 500 DWAGPSj9h1ds2ezvwegnwCHiVzPhAHoBNthPMo6G17hE`
+`spl-token create-account {token pubickey}`
+
+`spl-token mint Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT 1000`
+
+`spl-token transfer --fund-recipient Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT 500 7jrFHLtDxAqPsc3S7nd3F1wAc99xqkD9wuQ38JtdMoej --allow-unfunded-recipient`
+
+```
+Transfer 500 tokens
+  Sender: CxpVDzCVvWK7TMZdscr3eYdADQBLAYt1WpAW6SNS9VkC
+  Recipient: 7jrFHLtDxAqPsc3S7nd3F1wAc99xqkD9wuQ38JtdMoej
+  Recipient associated token account: 7GsVQRRmys8FCDUQiQyYGi4Skvdbqmnz4rZjBNuNU77A
+  Funding recipient: 7GsVQRRmys8FCDUQiQyYGi4Skvdbqmnz4rZjBNuNU77A (0.00203928 SOL)
+Signature: PGfoWiXRFXz3BdwQrGVegisSkcE1JXnKQJS3gQgfxtmuj9qEf3eC9yGKfxqD1LmwcjVnJgaTdh4imgBKG3Vawsq
+```
 
 ### Tests
 

@@ -8,8 +8,8 @@ import { SendTxRequest } from '@project-serum/common';
 import path from 'path';
 import { Balances, MemberAccount } from './types/member_account';
 
-const tokenMint = '4CbuRj5io3PmQTEorMzxGLivrmNNiJdxo7QUtTfV4aCT';
-const tokenAccount = 'BjzbzxVJn1ugjpDnBKTYE4jjbSbQWbLSTaZ3XBGqYpWK';
+const tokenMint = 'Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT';
+const tokenAccount = '4bnA3CoM8ReXXFayVzWDuPiYeBdyypWvjRzSCWgKbMw9';
 
 async function main() {
 
@@ -28,30 +28,30 @@ async function main() {
 
     const rewardQ = await initializesRegistrar(registry, mint, _nonce, registrar, poolMint, provider);
 
-    const member = anchor.web3.Keypair.generate();
+    // const member = anchor.web3.Keypair.generate();
 
-    const [memberAccount, memberSigner] = await createsMember(member, registrar.publicKey, provider, registry);
+    // const [memberAccount, memberSigner] = await createsMember(member, registrar.publicKey, provider, registry);
 
-    await depositsUnlockedMemberByUnlocked(member.publicKey, memberAccount, provider, registry);
+    // await depositsUnlockedMemberByUnlocked(member.publicKey, memberAccount, provider, registry);
 
-    await stakesFromMemberByUnlocked(registrar.publicKey, rewardQ.publicKey, poolMint, member.publicKey, memberAccount.balances, memberAccount.balancesLocked, memberSigner, registrarSigner, provider, registry);
+    // await stakesFromMemberByUnlocked(registrar.publicKey, rewardQ.publicKey, poolMint, member.publicKey, memberAccount.balances, memberAccount.balancesLocked, memberSigner, registrarSigner, provider, registry);
 
-    const vault = await serumCmn.getTokenAccount(
-        provider,
-        memberAccount.balances.vault
-    );
-    const vaultStake = await serumCmn.getTokenAccount(
-        provider,
-        memberAccount.balances.vaultStake
-    );
-    const spt = await serumCmn.getTokenAccount(
-        provider,
-        memberAccount.balances.spt
-    );
+    // const vault = await serumCmn.getTokenAccount(
+    //     provider,
+    //     memberAccount.balances.vault
+    // );
+    // const vaultStake = await serumCmn.getTokenAccount(
+    //     provider,
+    //     memberAccount.balances.vaultStake
+    // );
+    // const spt = await serumCmn.getTokenAccount(
+    //     provider,
+    //     memberAccount.balances.spt
+    // );
 
-    console.log(`vault.amount: ${vault.amount}`);
-    console.log(`vaultStake.amount: ${vaultStake.amount}`);
-    console.log(`spt.amount: ${spt.amount}`);
+    // console.log(`vault.amount: ${vault.amount}`);
+    // console.log(`vaultStake.amount: ${vaultStake.amount}`);
+    // console.log(`spt.amount: ${spt.amount}`);
 
     console.log('success!');
 }
@@ -165,6 +165,7 @@ async function createsRegistryGenesis(registry: anchor.Program, provider: anchor
 
     const poolMint = await serumCmn.createMint(provider, registrarSigner);
     console.log(`PoolMint: ${poolMint.toString()}`);
+    console.log(`Registrar: ${registrar.publicKey.toString()}`);
     console.log(`RegistrarSigner: ${registrarSigner.toString()}`);
     console.log(`Nonce: ${_nonce}`);
 
