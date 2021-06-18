@@ -69,6 +69,12 @@ Transfer 500 tokens
 Signature: PGfoWiXRFXz3BdwQrGVegisSkcE1JXnKQJS3gQgfxtmuj9qEf3eC9yGKfxqD1LmwcjVnJgaTdh4imgBKG3Vawsq
 ```
 
+```
+solana config set --url https://api.devnet.solana.com
+mint: 9mog4nr4remcLLbSzhxjJnT7XrgbgpZDuBYzXCwZYyVp
+ownerTokenAccount: 3rrwsoCkkeFj2op7DSGWztGwmFwQwpJ2EAaredSqKMrA
+```
+
 ### Tests
 
 `lockup.js`

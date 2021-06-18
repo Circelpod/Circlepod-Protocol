@@ -4,29 +4,35 @@ import { TokenInstructions } from '@project-serum/serum';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { getLockupInfo, getRegistryProgram } from './lockup_utils';
 import fs from 'mz/fs';
-import { SendTxRequest } from '@project-serum/common';
+import { NodeWallet, SendTxRequest } from '@project-serum/common';
 import path from 'path';
 import { Balances, MemberAccount } from './types/member_account';
 
+// Devnet
+// const tokenMint = '9mog4nr4remcLLbSzhxjJnT7XrgbgpZDuBYzXCwZYyVp';
+// const tokenAccount = '3rrwsoCkkeFj2op7DSGWztGwmFwQwpJ2EAaredSqKMrA';
+// const connection = new anchor.web3.Connection('https://api.devnet.solana.com');
+// const provider = new anchor.Provider(connection, NodeWallet.local(), anchor.Provider.defaultOptions());
+
+// Local
 const tokenMint = 'Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT';
 const tokenAccount = '4bnA3CoM8ReXXFayVzWDuPiYeBdyypWvjRzSCWgKbMw9';
+const provider = anchor.Provider.local();
 
 async function main() {
-
-    const provider = anchor.Provider.local();
-
-    const program = await getLockupInfo(provider);
 
     const mint = new anchor.web3.PublicKey(tokenMint);
     const account = new anchor.web3.PublicKey(tokenAccount);
 
     const registry = getRegistryProgram(provider);
 
-    const [vestingPublicKey, vestingAccount, vestingSigner] = await createsVestingAccount(provider, program, account, mint);
+    const [vestingPublicKey, vestingAccount, vestingSigner] = await createsVestingAccount(provider, account, mint);
 
-    const [poolMint, _nonce, registrar, registrarSigner] = await createsRegistryGenesis(registry, provider);
+    // await initRegistryProgram();
 
-    const rewardQ = await initializesRegistrar(registry, mint, _nonce, registrar, poolMint, provider);
+    const [poolMint, _nonce, registrar, registrarSigner] = await createsRegistryGenesis(provider);
+
+    const rewardQ = await initializesRegistrar(mint, _nonce, registrar, poolMint, provider);
 
     // const member = anchor.web3.Keypair.generate();
 
@@ -54,6 +60,14 @@ async function main() {
     // console.log(`spt.amount: ${spt.amount}`);
 
     console.log('success!');
+
+    async function initRegistryProgram() {
+        await registry.state.rpc.new({
+            accounts: {
+                lockupProgram: (await getLockupInfo(provider)).programId,
+            }
+        });
+    }
 }
 
 main().then(
@@ -64,8 +78,10 @@ main().then(
     },
 );
 
-async function createsVestingAccount(provider: anchor.Provider, program: anchor.Program, account: anchor.web3.PublicKey, mint: anchor.web3.PublicKey): Promise<[anchor.web3.PublicKey, any, anchor.web3.PublicKey]> {
+async function createsVestingAccount(provider: anchor.Provider, account: anchor.web3.PublicKey, mint: anchor.web3.PublicKey): Promise<[anchor.web3.PublicKey, any, anchor.web3.PublicKey]> {
     console.log(`-----Start Creates Vesting Account-----`);
+
+    const program = await getLockupInfo(provider);
 
     const vesting = anchor.web3.Keypair.generate();
 
@@ -114,6 +130,8 @@ async function createsVestingAccount(provider: anchor.Provider, program: anchor.
         }
     );
 
+    await serumCmn.sleep(30000);
+
     const vestingAccount: any = await program.account.vesting.fetch(vesting.publicKey);
 
     console.log(`Start: ${new Date(startTs.toNumber() * 1000).toISOString()}`);
@@ -149,7 +167,9 @@ async function createsVestingAccount(provider: anchor.Provider, program: anchor.
     return [vesting.publicKey, vestingAccount, vestingSigner];
 }
 
-async function createsRegistryGenesis(registry: anchor.Program, provider: anchor.Provider): Promise<[anchor.web3.PublicKey, number, anchor.web3.Keypair, anchor.web3.PublicKey]> {
+async function createsRegistryGenesis(provider: anchor.Provider): Promise<[anchor.web3.PublicKey, number, anchor.web3.Keypair, anchor.web3.PublicKey]> {
+
+    const registry = getRegistryProgram(provider);
 
     console.log(`-----Start Creates Registry Genesis-----`);
 
@@ -174,9 +194,11 @@ async function createsRegistryGenesis(registry: anchor.Program, provider: anchor
     return [poolMint, _nonce, registrar, registrarSigner];
 }
 
-export async function initializesRegistrar(registry: anchor.Program, mint: PublicKey, nonce: number, registrar: Keypair, poolMint: PublicKey, provider: anchor.Provider): Promise<Keypair> {
+export async function initializesRegistrar(mint: PublicKey, nonce: number, registrar: Keypair, poolMint: PublicKey, provider: anchor.Provider): Promise<Keypair> {
 
     console.log(`-----Start Initializes Registrar-----`);
+
+    const registry = getRegistryProgram(provider);
 
     const stakeRate = new anchor.BN(2);
     const rewardQLen = 170;
@@ -205,6 +227,8 @@ export async function initializesRegistrar(registry: anchor.Program, mint: Publi
             ],
         }
     );
+
+    await serumCmn.sleep(30000);
 
     const registrarAccount: any = await registry.account.registrar.fetch(registrar.publicKey);
 

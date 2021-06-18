@@ -13,22 +13,22 @@ module.exports = async function (provider) {
   const registrarConfigs = await genesis(provider);
 
   // Program clients.
-  const lockup = anchor.workspace.Lockup;
-  const registry = anchor.workspace.Registry;
+  const lockup = anchor.workspace.StakingLockup;
+  const registry = anchor.workspace.StakingRegistry;
 
   // Registry state constructor.
-  await registry.state.rpc.new({
-    accounts: {
-      lockupProgram: lockup.programId,
-    },
-  });
+  // await registry.state.rpc.new({
+  //   accounts: {
+  //     lockupProgram: lockup.programId,
+  //   },
+  // });
 
   // Lockup state constructor.
-  await lockup.state.rpc.new({
-    accounts: {
-      authority: provider.wallet.publicKey,
-    },
-  });
+  // await lockup.state.rpc.new({
+  //   accounts: {
+  //     authority: provider.wallet.publicKey,
+  //   },
+  // });
 
   // Delete the default whitelist entries.
   const defaultEntry = { programId: new anchor.web3.PublicKey() };
@@ -102,6 +102,21 @@ async function genesis(provider) {
         mint: "MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L",
       },
     };
+  } else if (provider.connection._rpcEndpoint === 'https://api.devnet.solana.com') {
+      return {
+        token1: {
+          withdrawalTimelock: 60 * 60 * 24 * 7,
+          stakeRate: 1000 * 10 ** 6,
+          rewardQLen: 150,
+          mint: 'Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT',
+        },
+        token2: {
+          withdrawalTimelock: 60 * 60 * 24 * 7,
+          stakeRate: 1,
+          rewardQLen: 150,
+          mint: 'Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT',
+        }
+      }
   } else {
     const [token1Mint, _god1] = await serumCmn.createMintAndVault(
       provider,

@@ -1,9 +1,18 @@
 import * as anchor from '@project-serum/anchor';
+import { NodeWallet } from '@project-serum/common';
 import { PublicKey } from '@solana/web3.js';
 import fs from 'fs';
 import path from 'path';
 
 // if you deploy first, Pleace Run it with yarn start:devdapp:client:lockup:init
+
+// Devnet
+// const connection = new anchor.web3.Connection('https://api.devnet.solana.com');
+// const provider = new anchor.Provider(connection, NodeWallet.local(), anchor.Provider.defaultOptions());
+
+// Local
+const provider = anchor.Provider.local();
+
 async function main() {
 
     await lockupInit();
@@ -19,7 +28,6 @@ async function lockupInit() {
     // Address of the deployed program.
     const programId = new anchor.web3.PublicKey('6eJH7ZoWui9wnvhTwDem2C2zMh6RZ9Dtc39EA9stYq8x');
 
-    const provider = anchor.Provider.local();
     anchor.setProvider(provider);
 
     // Generate the program client from IDL.

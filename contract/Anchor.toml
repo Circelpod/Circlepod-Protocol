@@ -1,8 +1,13 @@
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [clusters.localnet]
+circlepod_protocol = "G4zExjnm1CTk5KW46i96a4Hr1wpbhDGDZKuE74TpmbSS"
+staking_lockup = "6eJH7ZoWui9wnvhTwDem2C2zMh6RZ9Dtc39EA9stYq8x"
+staking_registry = "2vR8HyXLWJDWi81rfh7AxPNi5auSA8ZSxRPiFjYEVc7x"
+
+[clusters.devnet]
 circlepod_protocol = "G4zExjnm1CTk5KW46i96a4Hr1wpbhDGDZKuE74TpmbSS"
 staking_lockup = "6eJH7ZoWui9wnvhTwDem2C2zMh6RZ9Dtc39EA9stYq8x"
 staking_registry = "2vR8HyXLWJDWi81rfh7AxPNi5auSA8ZSxRPiFjYEVc7x"
