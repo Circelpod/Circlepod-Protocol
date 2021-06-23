@@ -9,15 +9,15 @@ import path from 'path';
 import { Balances, MemberAccount } from './types/member_account';
 
 // Devnet
-// const tokenMint = '9mog4nr4remcLLbSzhxjJnT7XrgbgpZDuBYzXCwZYyVp';
-// const tokenAccount = '3rrwsoCkkeFj2op7DSGWztGwmFwQwpJ2EAaredSqKMrA';
-// const connection = new anchor.web3.Connection('https://api.devnet.solana.com');
-// const provider = new anchor.Provider(connection, NodeWallet.local(), anchor.Provider.defaultOptions());
+const connection = new anchor.web3.Connection('https://api.devnet.solana.com');
+const provider = new anchor.Provider(connection, NodeWallet.local(), anchor.Provider.defaultOptions());
+const tokenMint = '5QhsyriyneDvoZCt9Cji5GyrXRZ1pfBoj372PQbZ3eVz';
+const tokenAccount = 'CFF4SPAaXYDYMnsQe1KFKbTm7zULD4i9SRA1y6X3VJUS';
 
 // Local
-const tokenMint = 'Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT';
-const tokenAccount = '4bnA3CoM8ReXXFayVzWDuPiYeBdyypWvjRzSCWgKbMw9';
-const provider = anchor.Provider.local();
+// const provider = anchor.Provider.local();
+// const tokenMint = 'GJ65oHuFLo3K48CU3MUJk4mjqDsBpNReKttnwptdTfX4';
+// const tokenAccount = 'FdsYvUaa61sYxMiDXHFGDyQLjHewppLRoLHaWEtR2HsF';
 
 async function main() {
 
@@ -60,14 +60,6 @@ async function main() {
     // console.log(`spt.amount: ${spt.amount}`);
 
     console.log('success!');
-
-    async function initRegistryProgram() {
-        await registry.state.rpc.new({
-            accounts: {
-                lockupProgram: (await getLockupInfo(provider)).programId,
-            }
-        });
-    }
 }
 
 main().then(
@@ -200,7 +192,7 @@ export async function initializesRegistrar(mint: PublicKey, nonce: number, regis
 
     const registry = getRegistryProgram(provider);
 
-    const stakeRate = new anchor.BN(2);
+    const stakeRate = new anchor.BN(1);
     const rewardQLen = 170;
     const rewardQ = anchor.web3.Keypair.generate();
 

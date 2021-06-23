@@ -52,13 +52,13 @@ Generic react hooks to interact with token program:
 
 ### SPL Token use
 
-`spl-token create-token`
+`spl-token create-token --decimals 4`
 
 `spl-token create-account {token pubickey}`
 
-`spl-token mint Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT 1000`
+`spl-token mint GJ65oHuFLo3K48CU3MUJk4mjqDsBpNReKttnwptdTfX4 1000000`
 
-`spl-token transfer --fund-recipient Gk2vrtVBJ69y35GF5cv8ihbDuZawTHGTSK1fLJsY9deT 500 7jrFHLtDxAqPsc3S7nd3F1wAc99xqkD9wuQ38JtdMoej --allow-unfunded-recipient`
+`spl-token transfer --fund-recipient GJ65oHuFLo3K48CU3MUJk4mjqDsBpNReKttnwptdTfX4 500 7jrFHLtDxAqPsc3S7nd3F1wAc99xqkD9wuQ38JtdMoej --allow-unfunded-recipient`
 
 ```
 Transfer 500 tokens
@@ -71,8 +71,8 @@ Signature: PGfoWiXRFXz3BdwQrGVegisSkcE1JXnKQJS3gQgfxtmuj9qEf3eC9yGKfxqD1LmwcjVnJ
 
 ```
 solana config set --url https://api.devnet.solana.com
-mint: 9mog4nr4remcLLbSzhxjJnT7XrgbgpZDuBYzXCwZYyVp
-ownerTokenAccount: 3rrwsoCkkeFj2op7DSGWztGwmFwQwpJ2EAaredSqKMrA
+mint: 5QhsyriyneDvoZCt9Cji5GyrXRZ1pfBoj372PQbZ3eVz
+ownerTokenAccount: CFF4SPAaXYDYMnsQe1KFKbTm7zULD4i9SRA1y6X3VJUS
 ```
 
 ### Tests

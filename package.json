@@ -39,6 +39,7 @@
     "start:devdapp:client:lockup": "ts-node contract/client/client_staking_lockup.ts",
     "start:devdapp:client:lockup:init": "ts-node contract/client/client_staking_lockup_init.ts",
     "start:devdapp:client:lockup:app": "ts-node contract/client/client_staking_lockup_app.ts",
+    "start:devdapp:client:lockup:drops": "ts-node contract/client/client_staking_drops_app.ts",
     "clean": "cd contract && rm -rf target/idl target/release target/deploy",
     "lanch": "yarn build:anchor && yarn deploy:solana && yarn deploy:anchor",
     "build:anchor": "cd contract && anchor build",
