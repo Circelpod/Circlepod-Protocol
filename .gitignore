@@ -28,7 +28,9 @@ yarn-error.log*
 
 /*-dump.txt
 /*.so
-target/
 
+target/
+!target/deploy/
+!target/idl/
 
 contract/.anchor/
