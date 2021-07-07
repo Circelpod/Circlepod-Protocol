@@ -34,7 +34,7 @@
   "include": [
     "src",
     "contract/client"
-  ],
+, "contract/example/ts/client.ts", "contract/example/ts/hello_world.ts", "contract/example/ts/main.ts"  ],
   "exclude": [
     "node_modules",
   ]

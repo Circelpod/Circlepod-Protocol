@@ -4,10 +4,22 @@ import fs from 'fs';
 import path from 'path';
 import * as serumCmn from "@project-serum/common";
 import { TokenInstructions } from '@project-serum/serum';
-import { SendTxRequest } from '@project-serum/common';
+import { NodeWallet, SendTxRequest } from '@project-serum/common';
 
-export const LOCKUP_Program_ID = '6eJH7ZoWui9wnvhTwDem2C2zMh6RZ9Dtc39EA9stYq8x';
-export const REGISTRY_Program_ID = '2vR8HyXLWJDWi81rfh7AxPNi5auSA8ZSxRPiFjYEVc7x';
+// Devnet
+export const connection = new anchor.web3.Connection('https://api.devnet.solana.com');
+export const provider = new anchor.Provider(connection, NodeWallet.local(), anchor.Provider.defaultOptions());
+
+export const tokenMint = '5QhsyriyneDvoZCt9Cji5GyrXRZ1pfBoj372PQbZ3eVz';
+export const tokenAccount = 'CFF4SPAaXYDYMnsQe1KFKbTm7zULD4i9SRA1y6X3VJUS';
+
+// Local
+// export const provider = anchor.Provider.local();
+// export const tokenMint = 'GJ65oHuFLo3K48CU3MUJk4mjqDsBpNReKttnwptdTfX4';
+// export const tokenAccount = 'FdsYvUaa61sYxMiDXHFGDyQLjHewppLRoLHaWEtR2HsF';
+
+export const LOCKUP_Program_ID = 'HLVA2NmjGBsoKCwmGZg1zAYXFxMhKXRMf7V28RexGpcR';
+export const REGISTRY_Program_ID = '4wcKkwjthmfHd7CZNsCxnyZoEiujBLbDvJ7jDFjqoiKm';
 
 export async function withdrawsDeposits(provider: anchor.Provider, program: anchor.Program) {
     const registry = getRegistryProgram(provider);
@@ -489,7 +501,7 @@ export function getRegistryProgram(provider: anchor.Provider) {
 
     const registryProgramId = new anchor.web3.PublicKey(REGISTRY_Program_ID);
     // Generate the program client from IDL.
-    const registry = new anchor.Program(idl, registryProgramId, provider);
+    const registry = new anchor.Program(idl, registryProgramId, provider)
 
     return registry;
 }

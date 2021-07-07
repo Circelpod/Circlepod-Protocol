@@ -17,7 +17,8 @@
     "max-classes-per-file": false,
     "object-literal-shorthand": false,
     "no-unused-expression": false,
-    "no-unsafe-any": false
+    "no-unsafe-any": false,
+    "no-unnecessary-type-assertion": false,
   },
   "rulesDirectory": []
 }
