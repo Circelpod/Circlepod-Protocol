@@ -1,12 +1,12 @@
 [package]
-name = "circlepod-protocol"
+name = "token-proxy"
 version = "0.1.0"
-description = "Circlepod Protocol"
+description = "Created with Anchor"
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "circlepod_protocol"
+name = "token_proxy"
 
 [features]
 no-entrypoint = []
@@ -15,6 +15,6 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.7.0"
-anchor-spl = "0.7.0"
+anchor-lang = "0.11.0"
+anchor-spl = "0.11.0"
 spl-token = { version = "3.1.1", features = ["no-entrypoint"] }

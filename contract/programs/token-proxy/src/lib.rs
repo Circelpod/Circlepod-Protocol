@@ -1,8 +1,10 @@
+//! This example demonstrates the use of the `anchor_spl::token` CPI client.
+
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, MintTo, SetAuthority, Transfer};
 
 #[program]
-pub mod circlepod_protocol {
+mod token_proxy {
     use super::*;
 
     pub fn proxy_transfer(ctx: Context<ProxyTransfer>, amount: u64) -> ProgramResult {
