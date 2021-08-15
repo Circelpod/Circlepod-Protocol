@@ -1,18 +1,16 @@
-// TODO: use the `@solana/spl-token` package instead of utils here.
-
-const anchor = require("@project-serum/anchor");
-const serumCmn = require("@project-serum/common");
-const TokenInstructions = require("@project-serum/serum").TokenInstructions;
+const anchor = require('@project-serum/anchor');
+const serumCmn = require('@project-serum/common');
+const TokenInstructions = require('@project-serum/serum').TokenInstructions;
 
 // TODO: remove this constant once @project-serum/serum uses the same version
 //       of @solana/web3.js as anchor (or switch packages).
 const TOKEN_PROGRAM_ID = new anchor.web3.PublicKey(
-  TokenInstructions.TOKEN_PROGRAM_ID.toString()
+  TokenInstructions.TOKEN_PROGRAM_ID.toString(),
 );
 
 // Our own sleep function.
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function getTokenAccount(provider, addr) {
@@ -27,7 +25,7 @@ async function createMint(provider, authority) {
   const instructions = await createMintInstructions(
     provider,
     authority,
-    mint.publicKey
+    mint.publicKey,
   );
 
   const tx = new anchor.web3.Transaction();
@@ -60,7 +58,7 @@ async function createTokenAccount(provider, mint, owner) {
   const vault = anchor.web3.Keypair.generate();
   const tx = new anchor.web3.Transaction();
   tx.add(
-    ...(await createTokenAccountInstrs(provider, vault.publicKey, mint, owner))
+    ...(await createTokenAccountInstrs(provider, vault.publicKey, mint, owner)),
   );
   await provider.send(tx, [vault]);
   return vault.publicKey;
@@ -71,7 +69,7 @@ async function createTokenAccountInstrs(
   newAccountPubkey,
   mint,
   owner,
-  lamports
+  lamports,
 ) {
   if (lamports === undefined) {
     lamports = await provider.connection.getMinimumBalanceForRentExemption(165);
@@ -97,7 +95,7 @@ async function mintToAccount(
   mint,
   destination,
   amount,
-  mintAuthority
+  mintAuthority,
 ) {
   // mint authority is the provider
   const tx = new anchor.web3.Transaction();
@@ -106,8 +104,8 @@ async function mintToAccount(
       mint,
       destination,
       amount,
-      mintAuthority
-    ))
+      mintAuthority,
+    )),
   );
   await provider.send(tx, []);
   return;
@@ -117,7 +115,7 @@ async function createMintToAccountInstrs(
   mint,
   destination,
   amount,
-  mintAuthority
+  mintAuthority,
 ) {
   return [
     TokenInstructions.mintTo({

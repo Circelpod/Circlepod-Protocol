@@ -603,36 +603,44 @@ export async function dropsUnlockedReward(
 }
 
 export async function lockupInit() {
+  // Read the generated IDL.
+  const idl = JSON.parse(
+    fs.readFileSync(
+      path.resolve(__dirname, '..', 'target/idl/staking_lockup.json'),
+      'utf8',
+    ),
+  );
 
-    // Read the generated IDL.
-    const idl = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'target/idl/staking_lockup.json'), 'utf8'));
+  // Address of the deployed program.
+  const programId = new anchor.web3.PublicKey(
+    'HLVA2NmjGBsoKCwmGZg1zAYXFxMhKXRMf7V28RexGpcR',
+  );
 
-    // Address of the deployed program.
-    const programId = new anchor.web3.PublicKey('HLVA2NmjGBsoKCwmGZg1zAYXFxMhKXRMf7V28RexGpcR');
+  anchor.setProvider(provider);
 
-    anchor.setProvider(provider);
+  // Generate the program client from IDL.
+  const program = new anchor.Program(idl, programId, provider);
 
-    // Generate the program client from IDL.
-    const program = new anchor.Program(idl, programId, provider);
+  // await program.state.rpc.new({
+  //   accounts: {
+  //     authority: provider.wallet.publicKey,
+  //   },
+  // });
 
-    // await program.state.rpc.new({
-    //   accounts: {
-    //     authority: provider.wallet.publicKey,
-    //   },
-    // });
+  const lockupAddress = program.state.address();
+  console.log(`lockupAddress: ${lockupAddress.toString()}`);
 
-    const lockupAddress = program.state.address();
-    console.log(`lockupAddress: ${lockupAddress.toString()}`);
+  const lockupAccount: any = await program.state.fetch();
+  console.log(
+    `lockupAccount: ${(lockupAccount.authority as PublicKey).toString()}`,
+  );
 
-    const lockupAccount: any = await program.state.fetch();
-    console.log(`lockupAccount: ${(lockupAccount.authority as PublicKey).toString()}`);
-
-    for (const e in lockupAccount.whitelist) {
-        console.log(`whitelist: ${JSON.stringify(e)}`);
-        await program.state.rpc.whitelistDelete(e, {
-            accounts: {
-                authority: provider.wallet.publicKey,
-            },
-        });
-    }
+  for (const e in lockupAccount.whitelist) {
+    console.log(`whitelist: ${JSON.stringify(e)}`);
+    await program.state.rpc.whitelistDelete(e, {
+      accounts: {
+        authority: provider.wallet.publicKey,
+      },
+    });
+  }
 }

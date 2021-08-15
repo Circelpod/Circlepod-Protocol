@@ -384,7 +384,7 @@ mod staking_registry {
             period_count,
         } = kind
         {
-            if !staking_lockup::is_valid_schedule(start_ts, end_ts, period_count) {
+            if !lockup::is_valid_schedule(start_ts, end_ts, period_count) {
                 return Err(ErrorCode::InvalidVestingSchedule.into());
             }
         }
@@ -505,7 +505,7 @@ mod staking_registry {
             &[],
         )?;
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
-        staking_lockup::cpi::create_vesting(
+        lockup::cpi::create_vesting(
             cpi_ctx,
             ctx.accounts.cmn.member.beneficiary,
             reward_amount,
@@ -562,7 +562,6 @@ pub struct Initialize<'info> {
     reward_event_q: ProgramAccount<'info, RewardQueue>,
     #[account("pool_mint.decimals == 0")]
     pool_mint: CpiAccount<'info, Mint>,
-    rent: Sysvar<'info, Rent>,
 }
 
 impl<'info> Initialize<'info> {
@@ -616,7 +615,6 @@ pub struct CreateMember<'info> {
     // Misc.
     #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
-    rent: Sysvar<'info, Rent>,
 }
 
 impl<'info> CreateMember<'info> {
@@ -817,7 +815,6 @@ pub struct StartUnstake<'info> {
     #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
     clock: Sysvar<'info, Clock>,
-    rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]
@@ -940,7 +937,6 @@ pub struct DropReward<'info> {
     #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
     clock: Sysvar<'info, Clock>,
-    rent: Sysvar<'info, Rent>,
 }
 
 impl<'info> DropReward<'info> {

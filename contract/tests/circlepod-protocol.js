@@ -1,43 +1,40 @@
-const anchor = require("@project-serum/anchor");
-const assert = require("assert");
+const anchor = require('@project-serum/anchor');
+const assert = require('assert');
 
-describe("token", () => {
+describe('token', () => {
   const provider = anchor.Provider.local();
 
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.CirclepodProtocol;
-  
+  const program = anchor.workspace.TokenProxy;
+
   let mint = null;
   let from = null;
   let to = null;
 
-  it("Initializes test state", async () => {
+  it('Initializes test state', async () => {
     mint = await createMint(provider);
     from = await createTokenAccount(provider, mint, provider.wallet.publicKey);
     to = await createTokenAccount(provider, mint, provider.wallet.publicKey);
   });
 
-  it("Mints a token", async () => {
-    try {
-      await program.rpc.proxyMintTo(new anchor.BN(1000), {
-        accounts: {
-          authority: provider.wallet.publicKey,
-          mint,
-          to: from,
-          tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
-        },
-      });
-    } catch(err) {
-      console.error(err);
-    }
+  it('Mints a token', async () => {
+    await program.rpc.proxyMintTo(new anchor.BN(1000), {
+      accounts: {
+        authority: provider.wallet.publicKey,
+        mint,
+        to: from,
+        tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+      },
+    });
 
     const fromAccount = await getTokenAccount(provider, from);
+
     assert.ok(fromAccount.amount.eq(new anchor.BN(1000)));
   });
 
-  it("Transfers a token", async () => {
+  it('Transfers a token', async () => {
     await program.rpc.proxyTransfer(new anchor.BN(400), {
       accounts: {
         authority: provider.wallet.publicKey,
@@ -54,7 +51,7 @@ describe("token", () => {
     assert.ok(toAccount.amount.eq(new anchor.BN(400)));
   });
 
-  it("Burns a token", async () => {
+  it('Burns a token', async () => {
     await program.rpc.proxyBurn(new anchor.BN(399), {
       accounts: {
         authority: provider.wallet.publicKey,
@@ -68,10 +65,10 @@ describe("token", () => {
     assert.ok(toAccount.amount.eq(new anchor.BN(1)));
   });
 
-  it("Set new mint authority", async () => {
+  it('Set new mint authority', async () => {
     const newMintAuthority = anchor.web3.Keypair.generate();
     await program.rpc.proxySetAuthority(
-      { mintTokens: {} },
+      {mintTokens: {}},
       newMintAuthority.publicKey,
       {
         accounts: {
@@ -79,7 +76,7 @@ describe("token", () => {
           currentAuthority: provider.wallet.publicKey,
           tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
         },
-      }
+      },
     );
 
     const mintInfo = await getMintInfo(provider, mint);
@@ -90,13 +87,13 @@ describe("token", () => {
 // SPL token client boilerplate for test initialization. Everything below here is
 // mostly irrelevant to the point of the example.
 
-const serumCmn = require("@project-serum/common");
-const TokenInstructions = require("@project-serum/serum").TokenInstructions;
+const serumCmn = require('@project-serum/common');
+const TokenInstructions = require('@project-serum/serum').TokenInstructions;
 
 // TODO: remove this constant once @project-serum/serum uses the same version
 //       of @solana/web3.js as anchor (or switch packages).
 const TOKEN_PROGRAM_ID = new anchor.web3.PublicKey(
-  TokenInstructions.TOKEN_PROGRAM_ID.toString()
+  TokenInstructions.TOKEN_PROGRAM_ID.toString(),
 );
 
 async function getTokenAccount(provider, addr) {
@@ -115,7 +112,7 @@ async function createMint(provider, authority) {
   const instructions = await createMintInstructions(
     provider,
     authority,
-    mint.publicKey
+    mint.publicKey,
   );
 
   const tx = new anchor.web3.Transaction();
@@ -148,7 +145,7 @@ async function createTokenAccount(provider, mint, owner) {
   const vault = anchor.web3.Keypair.generate();
   const tx = new anchor.web3.Transaction();
   tx.add(
-    ...(await createTokenAccountInstrs(provider, vault.publicKey, mint, owner))
+    ...(await createTokenAccountInstrs(provider, vault.publicKey, mint, owner)),
   );
   await provider.send(tx, [vault]);
   return vault.publicKey;
@@ -159,7 +156,7 @@ async function createTokenAccountInstrs(
   newAccountPubkey,
   mint,
   owner,
-  lamports
+  lamports,
 ) {
   if (lamports === undefined) {
     lamports = await provider.connection.getMinimumBalanceForRentExemption(165);
