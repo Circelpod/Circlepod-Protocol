@@ -31,11 +31,6 @@
           "isSigner": false
         },
         {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "clock",
           "isMut": false,
           "isSigner": false
@@ -544,5 +539,8 @@
       "name": "InvalidSchedule",
       "msg": "Invalid vesting schedule given."
     }
-  ]
+  ],
+  "metadata": {
+    "address": "HLVA2NmjGBsoKCwmGZg1zAYXFxMhKXRMf7V28RexGpcR"
+  }
 }

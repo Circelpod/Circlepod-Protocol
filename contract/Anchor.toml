@@ -1,11 +1,18 @@
+anchor_version = "0.16.1"
+
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
-[clusters.localnet]
+[programs.localnet]
 staking_lockup = "HLVA2NmjGBsoKCwmGZg1zAYXFxMhKXRMf7V28RexGpcR"
 staking_registry = "4wcKkwjthmfHd7CZNsCxnyZoEiujBLbDvJ7jDFjqoiKm"
+ido_sale = "BvQQDMTy9XunH3muJaz6sckwpjyEeEvUqUowpSXBGVW7"
 
-[clusters.devnet]
+[programs.devnet]
 staking_lockup = "HLVA2NmjGBsoKCwmGZg1zAYXFxMhKXRMf7V28RexGpcR"
 staking_registry = "4wcKkwjthmfHd7CZNsCxnyZoEiujBLbDvJ7jDFjqoiKm"
+ido_sale = "BvQQDMTy9XunH3muJaz6sckwpjyEeEvUqUowpSXBGVW7"
+
+[scripts]
+test = "mocha -t 1000000"

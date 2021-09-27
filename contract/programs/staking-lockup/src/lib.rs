@@ -2,11 +2,13 @@
 //! it's suggested to start with the other examples.
 
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program;
 use anchor_lang::solana_program::instruction::Instruction;
-use anchor_lang::solana_program::program;
 use anchor_spl::token::{self, TokenAccount, Transfer};
 
 mod calculator;
+
+declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
 pub mod staking_lockup {
@@ -207,17 +209,17 @@ pub struct Auth<'info> {
 #[derive(Accounts)]
 pub struct CreateVesting<'info> {
     // Vesting.
-    #[account(init)]
-    vesting: ProgramAccount<'info, Vesting>,
+    #[account(zero)]
+    vesting: Account<'info, Vesting>,
     #[account(mut)]
-    vault: CpiAccount<'info, TokenAccount>,
+    vault: Account<'info, TokenAccount>,
     // Depositor.
     #[account(mut)]
     depositor: AccountInfo<'info>,
     #[account(signer)]
     depositor_authority: AccountInfo<'info>,
     // Misc.
-    #[account("token_program.key == &token::ID")]
+    #[account(constraint = token_program.key == &token::ID)]
     token_program: AccountInfo<'info>,
     clock: Sysvar<'info, Clock>,
 }
@@ -246,18 +248,21 @@ impl<'info> CreateVesting<'info> {
 pub struct Withdraw<'info> {
     // Vesting.
     #[account(mut, has_one = beneficiary, has_one = vault)]
-    vesting: ProgramAccount<'info, Vesting>,
+    vesting: Account<'info, Vesting>,
     #[account(signer)]
     beneficiary: AccountInfo<'info>,
     #[account(mut)]
-    vault: CpiAccount<'info, TokenAccount>,
-    #[account(seeds = [vesting.to_account_info().key.as_ref(), &[vesting.nonce]])]
+    vault: Account<'info, TokenAccount>,
+    #[account(
+        seeds = [vesting.to_account_info().key.as_ref()],
+        bump = vesting.nonce,
+    )]
     vesting_signer: AccountInfo<'info>,
     // Withdraw receiving target..
     #[account(mut)]
-    token: CpiAccount<'info, TokenAccount>,
+    token: Account<'info, TokenAccount>,
     // Misc.
-    #[account("token_program.key == &token::ID")]
+    #[account(constraint = token_program.key == &token::ID)]
     token_program: AccountInfo<'info>,
     clock: Sysvar<'info, Clock>,
 }
@@ -281,10 +286,13 @@ pub struct WhitelistTransfer<'info> {
 
     // Whitelist interface.
     #[account(mut, has_one = beneficiary, has_one = vault)]
-    vesting: ProgramAccount<'info, Vesting>,
-    #[account(mut, "&vault.owner == vesting_signer.key")]
-    vault: CpiAccount<'info, TokenAccount>,
-    #[account(seeds = [vesting.to_account_info().key.as_ref(), &[vesting.nonce]])]
+    vesting: Account<'info, Vesting>,
+    #[account(mut, constraint = &vault.owner == vesting_signer.key)]
+    vault: Account<'info, TokenAccount>,
+    #[account(
+        seeds = [vesting.to_account_info().key.as_ref()],
+        bump = vesting.nonce,
+    )]
     vesting_signer: AccountInfo<'info>,
     #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
@@ -295,7 +303,7 @@ pub struct WhitelistTransfer<'info> {
 
 #[derive(Accounts)]
 pub struct AvailableForWithdrawal<'info> {
-    vesting: ProgramAccount<'info, Vesting>,
+    vesting: Account<'info, Vesting>,
     clock: Sysvar<'info, Clock>,
 }
 
@@ -469,7 +477,8 @@ pub fn whitelist_relay_cpi<'info>(
     let signer = &[&seeds[..]];
     let mut accounts = transfer.to_account_infos();
     accounts.extend_from_slice(&remaining_accounts);
-    program::invoke_signed(&relay_instruction, &accounts, signer).map_err(Into::into)
+    solana_program::program::invoke_signed(&relay_instruction, &accounts, signer)
+        .map_err(Into::into)
 }
 
 pub fn is_whitelisted<'info>(transfer: &WhitelistTransfer<'info>) -> Result<()> {
