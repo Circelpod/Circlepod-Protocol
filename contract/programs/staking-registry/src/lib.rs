@@ -7,7 +7,7 @@ use anchor_spl::token::{self, Mint, TokenAccount, Transfer};
 use staking_lockup::{CreateVesting, RealizeLock, Realizor, Vesting};
 use std::convert::Into;
 
-declare_id!("HmbTLCmaGvZhKnn1Zfa1JVnp7vkMV4DYVxPLWBVoN65L");
+declare_id!("4wcKkwjthmfHd7CZNsCxnyZoEiujBLbDvJ7jDFjqoiKm");
 
 #[program]
 mod staking_registry {

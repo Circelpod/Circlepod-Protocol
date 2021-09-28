@@ -8,7 +8,7 @@ use anchor_spl::token::{self, TokenAccount, Transfer};
 
 mod calculator;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("HLVA2NmjGBsoKCwmGZg1zAYXFxMhKXRMf7V28RexGpcR");
 
 #[program]
 pub mod staking_lockup {

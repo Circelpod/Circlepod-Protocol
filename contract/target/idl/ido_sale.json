@@ -390,8 +390,5 @@
       "name": "InvalidNonce",
       "msg": "Given nonce is invalid"
     }
-  ],
-  "metadata": {
-    "address": "BvQQDMTy9XunH3muJaz6sckwpjyEeEvUqUowpSXBGVW7"
-  }
+  ]
 }

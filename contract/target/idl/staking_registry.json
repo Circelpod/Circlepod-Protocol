@@ -1460,8 +1460,5 @@
       "name": "InvalidProgramAuthority",
       "msg": "Please specify the correct authority for this program."
     }
-  ],
-  "metadata": {
-    "address": "4wcKkwjthmfHd7CZNsCxnyZoEiujBLbDvJ7jDFjqoiKm"
-  }
+  ]
 }
