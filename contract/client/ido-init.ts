@@ -226,7 +226,7 @@ async function initIdoPool(
     `此次 IDO 銷售數量（pool）為: ${pool_watermelon_account.amount.toNumber()}`,
   );
   console.log(
-    `銷售者的 Watermelon Token Account（因為提交了 IDO, 所以餘額應該為 0）: ${creatorWatermelon.toString()}, mint: ${
+    `銷售者的 Watermelon Token Account（因為提交了 IDO, 所以餘額應該減少）: ${creatorWatermelon.toString()}, mint: ${
       creators_watermelon_account.mint
     } amount: ${creators_watermelon_account.amount.toNumber()}`,
   );
