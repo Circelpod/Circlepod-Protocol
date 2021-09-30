@@ -4,45 +4,87 @@ import path from 'path';
 import {TokenInstructions} from '@project-serum/serum';
 import * as spl from '@solana/spl-token';
 import * as serumCmn from '@project-serum/common';
-import {NodeWallet, sleep} from '@project-serum/common';
-
-export const connection = new anchor.web3.Connection('http://localhost:8899');
-export const provider = new anchor.Provider(
-  connection,
-  NodeWallet.local(),
-  anchor.Provider.defaultOptions(),
-);
-
-export const IDOSALE_Program_ID =
-  'BvQQDMTy9XunH3muJaz6sckwpjyEeEvUqUowpSXBGVW7';
+import {
+  endForEndIdo,
+  idoAmount,
+  IDOSALE_Program_ID,
+  isProd,
+  preSecForStartIdo,
+  provider,
+  saveSec,
+  secTrans,
+  watermelonMint,
+  usdcMint,
+  getTokenAccount,
+  findTokenAccount,
+  createTokenAccount,
+  saleTime,
+  getConnectionString,
+} from './ido-config';
 
 async function main() {
+  console.log(`------------------------`);
+  console.log(`RPC 連線位置: ${getConnectionString()}`);
+  const creatorSaleTokenAccount = await findTokenAccount(
+    provider.wallet.publicKey,
+  );
+
+  console.log(`銷售者錢包地址: ${provider.wallet.publicKey.toString()}`);
+  console.log(
+    `銷售者錢包 Token Account 地址: ${creatorSaleTokenAccount.toString()}`,
+  );
+  console.log(`------------------------`);
+  console.log(`銷售開始基準時間: ${new Date(saleTime * 1000).toUTCString()}`);
+  console.log(
+    `銷售開始時間: ${new Date(
+      (saleTime + preSecForStartIdo) * 1000,
+    ).toUTCString()}`,
+  );
+  console.log(
+    `最後存入時間: ${new Date(
+      (saleTime + preSecForStartIdo + saveSec) * 1000,
+    ).toUTCString()}`,
+  );
+  console.log(
+    `銷售結束時間: ${new Date(
+      (saleTime + preSecForStartIdo + endForEndIdo) * 1000,
+    ).toUTCString()}`,
+  );
+  console.log(`銷售數量: ${idoAmount / Math.pow(10, 6)}`);
+  console.log(`------------------------`);
+  console.log(`銷售幣種 Mint: ${watermelonMint}`);
+  console.log(`收款 USDC Mint: ${usdcMint}`);
+  console.log(`------------------------`);
+  console.log(`環境配置, 是否為正式環境: ${isProd}`);
+  console.log(`交易間隔: ${secTrans}`);
+  console.log(`------------------------`);
+  console.log(`IDO 前置間隔: ${preSecForStartIdo}`);
+  console.log(`IDO 存入期間 ${saveSec}`);
+  console.log(`IDO 結束期間 ${endForEndIdo}`);
+
+  console.log(`開始計時 30 秒，請確認資訊正確`);
+  await serumCmn.sleep(27000);
+
+  console.log(`3 秒後開始執行`);
+  await serumCmn.sleep(1000);
+  console.log(`2 秒後開始執行`);
+  await serumCmn.sleep(1000);
+  console.log(`1 秒後開始執行`);
+  await serumCmn.sleep(1000);
+  console.log(`開始執行`);
+
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);
 
   const program = getRegistryProgram(provider);
 
   // All mints default to 6 decimal places.
-  const watermelonIdoAmount = new anchor.BN(5000000);
+  const watermelonIdoAmount = new anchor.BN(idoAmount);
 
-  // These are all of the variables we assume exist in the world already and
-  // are available to the client.
-
-  // 真實銷售不需要 initializes, 只是為了執行建制整體環境。實際上，應該都要先具備。
-  const {
-    usdcMintToken,
-    watermelonMintToken,
-    usdcMint,
-    watermelonMint,
-    creatorUsdc,
-    creatorWatermelon,
-  } = await initializes(watermelonIdoAmount);
-  // initializes 結束
-
-  // 初始化銷售開始
   // These are all variables the client will have to create to initialize the
   // IDO pool
   // We use the watermelon mint address as the seed, could use something else though.
+
   const {
     poolSigner,
     redeemableMintToken,
@@ -53,30 +95,61 @@ async function main() {
     startIdoTs,
     endDepositsTs,
     endIdoTs,
-  } = await initIDOPool(
+  } = await initIdoPool(
     watermelonMint,
     program,
     usdcMint,
     watermelonIdoAmount,
-    creatorWatermelon,
+    creatorSaleTokenAccount,
   );
 
+  await serumCmn.sleep(secTrans * 100);
+
+  const poolAccountData = await program.account.poolAccount.fetch(
+    poolAccount.publicKey,
+  );
+  console.log(
+    `Redeemable Mint: " ${poolAccountData.redeemableMint.toString()}`,
+  );
+  console.log(
+    `Pool Watermelon: " ${poolAccountData.poolWatermelon.toString()}`,
+  );
+  console.log(
+    `Watermelon Mint: " ${poolAccountData.watermelonMint.toString()}`,
+  );
+  console.log(`Pool Usdc: " ${poolAccountData.poolUsdc.toString()}`);
+  console.log(
+    `Distribution Authority: " ${poolAccountData.distributionAuthority.toString()}`,
+  );
+
+  console.log(`Num Ido Tokens: " ${poolAccountData.numIdoTokens.toNumber()}`);
+  console.log(`Start Ido Ts: " ${poolAccountData.startIdoTs.toNumber()}`);
+  console.log(`End DepositsTs: " ${poolAccountData.endDepositsTs.toNumber()}`);
+  console.log(`End Ido Ts: " ${poolAccountData.endIdoTs.toNumber()}`);
+
+  console.log(`------------------------`);
   console.log('success!');
 }
 
-async function initIDOPool(
+async function initIdoPool(
   watermelonMint: anchor.web3.PublicKey,
   program: anchor.Program,
   usdcMint: anchor.web3.PublicKey,
   watermelonIdoAmount: anchor.BN,
   creatorWatermelon: anchor.web3.PublicKey,
 ) {
+  console.log(`------------------------`);
+
   const [_poolSigner, nonce] = await anchor.web3.PublicKey.findProgramAddress(
     [watermelonMint.toBuffer()],
     program.programId,
   );
   const poolSigner = _poolSigner;
 
+  console.log(
+    `與 IDO 合約交互的簽名地址(Pool Signer): ${poolSigner.toString()}`,
+  );
+  // Redeemable 是一種證明使用者將資金存入 IDO 池中的 TOKEN
   // Pool doesn't need a Redeemable SPL token account because it only
   // burns and mints redeemable tokens, it never stores them.
   const redeemableMintToken = await createMint(provider, poolSigner);
@@ -93,20 +166,21 @@ async function initIDOPool(
   console.log(`Pool USDC Token Account: ${poolUsdc.toString()}`);
 
   const poolAccount = anchor.web3.Keypair.generate();
-  console.log(`Pool Account: ${poolAccount.publicKey}`);
+  console.log(`Pool Account PublicKey: ${poolAccount.publicKey.toString()}`);
+  console.log(`Pool Account SecretKey: ${poolAccount.secretKey.toString()}`);
 
-  const now = Date.now();
-  console.log(`現在時間: ${now}`);
+  const nowBn = new anchor.BN(saleTime + secTrans);
 
-  const nowBn = new anchor.BN(Date.now() / 1000);
-
-  const startIdoTs = nowBn.add(new anchor.BN(5));
+  // 開始 IDO 時間 = 現在時間 + 緩衝時間
+  const startIdoTs = nowBn.add(new anchor.BN(preSecForStartIdo));
   console.log(`Ido 開始時間: ${startIdoTs.toNumber()}`);
 
-  const endDepositsTs = nowBn.add(new anchor.BN(10));
+  // 結束存入時間 = 開始時間 + 存入期間
+  const endDepositsTs = startIdoTs.add(new anchor.BN(saveSec));
   console.log(`Ido 存入結束時間: ${endDepositsTs.toNumber()}`);
 
-  const endIdoTs = nowBn.add(new anchor.BN(15));
+  // 結束 IDO 時間 = 開始時間 + (整體活動時間 = 存入期間 * 2)
+  const endIdoTs = startIdoTs.add(new anchor.BN(endForEndIdo));
   console.log(`Ido 結束時間: ${endIdoTs.toNumber()}`);
 
   // Atomically create the new account and initialize it with the program.
@@ -138,15 +212,21 @@ async function initIDOPool(
     },
   );
 
-  await sleep(10000);
+  await serumCmn.sleep(secTrans * 1000);
+  const pool_watermelon_account = await getTokenAccount(
+    provider,
+    poolWatermelon,
+  );
   const creators_watermelon_account = await getTokenAccount(
     provider,
     creatorWatermelon,
   );
 
-  console.log(`此次 IDO 銷售數量為: ${watermelonIdoAmount.toNumber()}`);
   console.log(
-    `Creator's Watermelon ${creatorWatermelon.toString()}, mint: ${
+    `此次 IDO 銷售數量（pool）為: ${pool_watermelon_account.amount.toNumber()}`,
+  );
+  console.log(
+    `銷售者的 Watermelon Token Account（因為提交了 IDO, 所以餘額應該為 0）: ${creatorWatermelon.toString()}, mint: ${
       creators_watermelon_account.mint
     } amount: ${creators_watermelon_account.amount.toNumber()}`,
   );
@@ -160,68 +240,6 @@ async function initIDOPool(
     startIdoTs,
     endDepositsTs,
     endIdoTs,
-  };
-}
-
-async function initializes(watermelonIdoAmount: anchor.BN) {
-  // USDC 的 Token mint
-  const usdcMintToken = await createMint(provider, undefined);
-  console.log(`success mint usdc token: ${usdcMintToken.publicKey.toString()}`);
-
-  // 即將銷售的幣別 Token mint
-  const watermelonMintToken = await createMint(provider, undefined);
-  console.log(
-    `success mint watermelon token: ${watermelonMintToken.publicKey.toString()}`,
-  );
-
-  const usdcMint = usdcMintToken.publicKey;
-  const watermelonMint = watermelonMintToken.publicKey;
-
-  // 創建銷售者的 USDC's Token Account
-  const creatorUsdc = await createTokenAccount(
-    provider,
-    usdcMint,
-    provider.wallet.publicKey,
-  );
-  console.log(`success create creator's usdc token account: ${creatorUsdc}`);
-
-  // 創建銷售者的 即將銷售的幣別's Token Account
-  const creatorWatermelon = await createTokenAccount(
-    provider,
-    watermelonMint,
-    provider.wallet.publicKey,
-  );
-  console.log(
-    `success create creator's watermelon token account: ${creatorWatermelon}`,
-  );
-
-  // 即將銷售的幣別's Token 數量
-  // Mint Watermelon tokens the will be distributed from the IDO pool.
-  await watermelonMintToken.mintTo(
-    creatorWatermelon,
-    provider.wallet.publicKey,
-    [],
-    watermelonIdoAmount.toNumber(),
-  );
-
-  const creator_watermelon_account = await getTokenAccount(
-    provider,
-    creatorWatermelon,
-  );
-
-  console.log(
-    creator_watermelon_account.amount.toNumber(),
-    'creator_watermelon_account:amount',
-  );
-
-  console.log(watermelonIdoAmount.toNumber(), 'watermelonIdoAmount');
-  return {
-    usdcMintToken,
-    watermelonMintToken,
-    usdcMint,
-    watermelonMint,
-    creatorUsdc,
-    creatorWatermelon,
   };
 }
 
@@ -241,29 +259,7 @@ async function createMint(provider: anchor.Provider, authority: any) {
   return mint;
 }
 
-async function createTokenAccount(
-  provider: anchor.Provider,
-  mint: anchor.web3.PublicKey,
-  owner: anchor.web3.PublicKey,
-): Promise<anchor.web3.PublicKey> {
-  const token = new spl.Token(
-    provider.connection,
-    mint,
-    TokenInstructions.TOKEN_PROGRAM_ID,
-    (provider.wallet as any).payer,
-  );
-  const vault = await token.createAccount(owner);
-  return vault;
-}
-
-async function getTokenAccount(
-  provider: anchor.Provider,
-  addr: anchor.web3.PublicKey,
-) {
-  return await serumCmn.getTokenAccount(provider, addr);
-}
-
-export function getRegistryProgram(provider: anchor.Provider) {
+export function getRegistryProgram(provider: anchor.Provider): anchor.Program {
   // Read the generated IDL.
   const idl = JSON.parse(
     fs.readFileSync(
