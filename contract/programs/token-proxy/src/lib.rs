@@ -3,6 +3,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, MintTo, SetAuthority, Transfer};
 
+declare_id!("FW8STZU3ngx8KHc8L2koYBTeVyk7NGH1XJCB7EtjbUhb");
+
 #[program]
 mod token_proxy {
     use super::*;

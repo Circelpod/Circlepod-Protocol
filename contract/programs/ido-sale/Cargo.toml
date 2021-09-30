@@ -1,7 +1,7 @@
 [package]
 name = "ido-sale"
 version = "0.1.0"
-description = "Created with Anchor"
+description = "Created with Circlepod"
 edition = "2018"
 
 [lib]
@@ -15,5 +15,5 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.13.2"
-anchor-spl = "0.13.2"
+anchor-lang = "0.16.1"
+anchor-spl = "0.16.1"

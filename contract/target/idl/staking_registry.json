@@ -19,11 +19,6 @@
           "name": "poolMint",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -157,11 +152,6 @@
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -505,11 +495,6 @@
           "name": "clock",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -726,11 +711,6 @@
         },
         {
           "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
