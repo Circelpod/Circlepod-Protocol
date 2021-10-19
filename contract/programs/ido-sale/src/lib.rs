@@ -6,6 +6,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, CloseAccount, Mint, MintTo, Token, TokenAccount, Transfer};
 
 use std::ops::Deref;
+
 declare_id!("BvQQDMTy9XunH3muJaz6sckwpjyEeEvUqUowpSXBGVW7");
 
 const DECIMALS: u8 = 6;

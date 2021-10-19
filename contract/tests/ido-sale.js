@@ -65,7 +65,7 @@ describe('ido-sale', () => {
   // These are all variables the client will need to create in order to
   // initialize the IDO pool
   let idoTimes;
-  let idoName = Date.now().toString().substring(0, 10);;
+  let idoName = Date.now().toString().substring(0, 10);
 
   it('Initializes the IDO pool', async () => {
     let bumps = new PoolBumps();
@@ -450,19 +450,23 @@ describe('ido-sale', () => {
       provider.wallet.publicKey,
     );
 
-    await program.rpc.exchangeRedeemableForWatermelon(firstUserRedeemable, {
-      accounts: {
-        payer: provider.wallet.publicKey,
-        userAuthority: provider.wallet.publicKey,
-        userWatermelon,
-        userRedeemable,
-        idoAccount,
-        watermelonMint,
-        redeemableMint,
-        poolWatermelon,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      },
-    });
+    try {
+      await program.rpc.exchangeRedeemableForWatermelon(firstUserRedeemable, {
+        accounts: {
+          payer: provider.wallet.publicKey,
+          userAuthority: provider.wallet.publicKey,
+          userWatermelon,
+          userRedeemable,
+          idoAccount,
+          watermelonMint,
+          redeemableMint,
+          poolWatermelon,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+      });
+    } catch (e) {
+      console.error(e);
+    }
 
     poolWatermelonAccount = await getTokenAccount(provider, poolWatermelon);
     let redeemedWatermelon = firstUserRedeemable

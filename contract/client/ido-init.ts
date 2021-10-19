@@ -62,7 +62,14 @@ async function main() {
       (saleTime + preSecForStartIdo + endForEndIdo) * 1000,
     ).toUTCString()}`,
   );
-  console.log(`銷售數量: ${idoAmount / Math.pow(10, 6)}`);
+  console.log(
+    `USDC 開始退款時間: ${new Date(
+      (saleTime + preSecForStartIdo + endForEndIdoEsc) * 1000,
+    ).toUTCString()}`,
+  );
+  console.log(
+    `銷售數量: ${idoAmount / (isProd ? Math.pow(10, 6) : Math.pow(10, 4))}`,
+  );
   console.log(`------------------------`);
   console.log(`銷售幣種 Mint: ${watermelonMint}`);
   console.log(`收款 USDC Mint: ${usdcMint}`);
@@ -73,6 +80,8 @@ async function main() {
   console.log(`IDO 前置間隔: ${preSecForStartIdo}`);
   console.log(`IDO 存入期間 ${saveSec}`);
   console.log(`IDO 結束期間 ${endForEndIdo}`);
+  console.log(`USDC 開始退款時間 ${endForEndIdoEsc}`);
+  console.log(`------------------------`);
 
   console.log(`開始計時 30 秒，請確認資訊正確`);
   await serumCmn.sleep(27000);
@@ -265,7 +274,7 @@ async function initIdoPool(
     `此次 IDO 銷售數量（pool）為: ${pool_watermelon_account.amount.toNumber()}`,
   );
   console.log(
-    `銷售者的 Watermelon Token Account（因為提交了 IDO, 所以餘額應該為 0）: ${idoAuthorityWatermelon.toString()}, mint: ${
+    `銷售者的 Watermelon Token Account（因為提交了 IDO, 所以餘額應該減少）: ${idoAuthorityWatermelon.toString()}, mint: ${
       idoAuthority_watermelon_account.mint
     } amount: ${idoAuthority_watermelon_account.amount.toNumber()}`,
   );

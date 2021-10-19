@@ -3,14 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import {NodeWallet, sleep, getTokenAccount} from '@project-serum/common';
-import {ASSOCIATED_TOKEN_PROGRAM_ID, Token} from '@solana/spl-token';
 import {
-  createTokenAccount,
-  createMint,
-  IdoTimes,
-  Bumps,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
   TOKEN_PROGRAM_ID,
-} from './ido-config';
+} from '@solana/spl-token';
+import {createTokenAccount, createMint, IdoTimes, Bumps} from './ido-config';
 import {Transaction} from '@solana/web3.js';
 
 const isProd = process.env.NODE_ENV === 'production';
@@ -135,14 +133,18 @@ async function main() {
   );
 
   // 使用者 1 申請退回正在 ido 的部分金額
-  const {firstWithdrawal, newTotalPoolUsdc} = await userExchangeBackToUSDC(
-    idoName,
-    program,
-    userUsdc,
-    totalPoolUsdc,
-    usdcMint,
-    watermelonMint,
-  );
+  const {firstWithdrawal, newTotalPoolUsdc, userRedeemable} =
+    await userExchangeBackToUSDC(
+      idoName,
+      program,
+      userUsdc,
+      totalPoolUsdc,
+      usdcMint,
+      watermelonMint,
+      idoAccount,
+      redeemableMint,
+      poolUsdc,
+    );
 
   // 使用者 1 取得已經購買的 Token
   await user1GetPurchasedToken(
@@ -154,6 +156,10 @@ async function main() {
     program,
     watermelonIdoAmount,
     newTotalPoolUsdc,
+    idoAccount,
+    redeemableMint,
+    poolWatermelon,
+    userRedeemable,
   );
 
   // 使用者 2 取得已經購買的 Token
@@ -208,7 +214,7 @@ async function printIdoAccountInfo(
   const poolAccountData = await program.account.idoAccount.fetch(idoAccount);
 
   const buffer = Buffer.from(poolAccountData.idoName as ArrayBuffer);
-  console.log(`Ido Name : ${buffer.toString()}`);
+  console.log(`Ido Name: ${buffer.toString()}`);
   console.log(`Bumps: ${JSON.stringify(poolAccountData.bumps)}`);
   console.log(`USDC Mint: ${poolAccountData.usdcMint.toString()}`);
   console.log(`Redeemable Mint: ${poolAccountData.redeemableMint.toString()}`);
@@ -380,6 +386,10 @@ async function user1GetPurchasedToken(
   program: anchor.Program,
   watermelonIdoAmount: anchor.BN,
   newTotalPoolUsdc: anchor.BN,
+  idoAccount: anchor.web3.PublicKey,
+  redeemableMint: anchor.web3.PublicKey,
+  poolWatermelon: anchor.web3.PublicKey,
+  userRedeemable: anchor.web3.PublicKey,
 ) {
   console.log(`------------------------`);
   console.log(`使用者 1 進行取出購買的 Token, 並且銷毀 Redeemable Token`);
@@ -396,34 +406,11 @@ async function user1GetPurchasedToken(
         : 0
     } 秒`,
   );
+
   // Wait until the IDO has opened.
   if (Date.now() < endIdoTs.toNumber() * 1000) {
     await sleep(endIdoTs.toNumber() * 1000 - Date.now() + 2000);
   }
-
-  const [idoAccount] = await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(idoName)],
-    program.programId,
-  );
-
-  const [poolWatermelon] = await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(idoName), Buffer.from('pool_watermelon')],
-    program.programId,
-  );
-
-  const [redeemableMint] = await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(idoName), Buffer.from('redeemable_mint')],
-    program.programId,
-  );
-
-  const [userRedeemable] = await anchor.web3.PublicKey.findProgramAddress(
-    [
-      provider.wallet.publicKey.toBuffer(),
-      Buffer.from(idoName),
-      Buffer.from('user_redeemable'),
-    ],
-    program.programId,
-  );
 
   const firstUserRedeemable = firstDeposit.sub(firstWithdrawal);
 
@@ -503,26 +490,14 @@ async function userExchangeBackToUSDC(
   totalPoolUsdc: anchor.BN,
   usdcMint: anchor.web3.PublicKey,
   watermelonMint: anchor.web3.PublicKey,
+  idoAccount: anchor.web3.PublicKey,
+  redeemableMint: anchor.web3.PublicKey,
+  poolUsdc: anchor.web3.PublicKey,
 ) {
   console.log(`------------------------`);
   console.log(`使用者 1 進行取出 USDC, 並且銷毀 Redeemable Token`);
   const firstWithdrawal = new anchor.BN(2000000);
   console.log(`使用者 1 取出: ${firstWithdrawal} USDC`);
-
-  const [idoAccount] = await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(idoName)],
-    program.programId,
-  );
-
-  const [redeemableMint] = await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(idoName), Buffer.from('redeemable_mint')],
-    program.programId,
-  );
-
-  const [poolUsdc] = await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(idoName), Buffer.from('pool_usdc')],
-    program.programId,
-  );
 
   const [userRedeemable] = await anchor.web3.PublicKey.findProgramAddress(
     [
@@ -584,7 +559,7 @@ async function userExchangeBackToUSDC(
     `實際上的 IDO Pool 總 USDC 存款: ${poolUsdcAccount.amount.toNumber()}`,
   );
 
-  return {firstWithdrawal, newTotalPoolUsdc: nowTotalPoolUsdc};
+  return {firstWithdrawal, newTotalPoolUsdc: nowTotalPoolUsdc, userRedeemable};
 }
 
 async function user2PayUSDCJoinIDO(

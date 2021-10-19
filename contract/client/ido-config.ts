@@ -1,14 +1,8 @@
 import * as anchor from '@project-serum/anchor';
 import {NodeWallet} from '@project-serum/common';
 import * as serumCmn from '@project-serum/common';
-import {AccountInfo, Token} from '@solana/spl-token';
-import {TokenInstructions} from '@project-serum/serum';
-
-// TODO: remove this constant once @project-serum/serum uses the same version
-//       of @solana/web3.js as anchor (or switch packages).
-export const TOKEN_PROGRAM_ID = new anchor.web3.PublicKey(
-  TokenInstructions.TOKEN_PROGRAM_ID.toString(),
-);
+import {AccountInfo, Token, TOKEN_PROGRAM_ID} from '@solana/spl-token';
+import crypto from 'crypto';
 
 export class Bumps {
   idoAccount: number | undefined;
@@ -59,7 +53,10 @@ export async function getTokenAccount(
   return await serumCmn.getTokenAccount(provider, addr);
 }
 
-export async function createMint(provider: anchor.Provider, authority: any) {
+export async function createMint(
+  provider: anchor.Provider,
+  authority: any,
+): Promise<Token> {
   if (authority === undefined) {
     authority = provider.wallet.publicKey;
   }
@@ -102,8 +99,11 @@ export function getConnectionString(): string {
 }
 
 export function getIdoName(): string {
-  let idoName = isTest ? Date.now().toString().substring(0, 10) : '';
-  idoName = isProd ? 'token1' : Date.now().toString().substring(0, 10);
+  const idoName = crypto
+    .createHash('sha256')
+    .update(Date.now().toString())
+    .digest('hex')
+    .substring(0, 10);
 
   return idoName;
 }
