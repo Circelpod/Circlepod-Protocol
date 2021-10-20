@@ -1,7 +1,6 @@
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
 import path from 'path';
-import {TokenInstructions} from '@project-serum/serum';
 import * as spl from '@solana/spl-token';
 import * as serumCmn from '@project-serum/common';
 import {
@@ -16,22 +15,35 @@ import {
   watermelonMint,
   usdcMint,
   getTokenAccount,
-  findTokenAccount,
   createTokenAccount,
   saleTime,
   getConnectionString,
+  getIdoName,
+  Bumps,
+  IdoTimes,
+  endForEndIdoEsc,
 } from './ido-config';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
+import {sleep} from '@project-serum/common';
 
 async function main() {
+  const idoName = getIdoName();
+
+  console.log(`IDO Name: ${idoName}`);
+
   console.log(`------------------------`);
   console.log(`RPC 連線位置: ${getConnectionString()}`);
-  const creatorSaleTokenAccount = await findTokenAccount(
+  const idoAuthoritySaleTokenAccount = await findTokenAccount(
     provider.wallet.publicKey,
   );
 
   console.log(`銷售者錢包地址: ${provider.wallet.publicKey.toString()}`);
   console.log(
-    `銷售者錢包 Token Account 地址: ${creatorSaleTokenAccount.toString()}`,
+    `銷售者錢包 Token Account 地址: ${idoAuthoritySaleTokenAccount.toString()}`,
   );
   console.log(`------------------------`);
   console.log(`銷售開始基準時間: ${new Date(saleTime * 1000).toUTCString()}`);
@@ -50,7 +62,14 @@ async function main() {
       (saleTime + preSecForStartIdo + endForEndIdo) * 1000,
     ).toUTCString()}`,
   );
-  console.log(`銷售數量: ${idoAmount / Math.pow(10, 6)}`);
+  console.log(
+    `USDC 開始退款時間: ${new Date(
+      (saleTime + preSecForStartIdo + endForEndIdoEsc) * 1000,
+    ).toUTCString()}`,
+  );
+  console.log(
+    `銷售數量: ${idoAmount / (isProd ? Math.pow(10, 6) : Math.pow(10, 4))}`,
+  );
   console.log(`------------------------`);
   console.log(`銷售幣種 Mint: ${watermelonMint}`);
   console.log(`收款 USDC Mint: ${usdcMint}`);
@@ -61,6 +80,8 @@ async function main() {
   console.log(`IDO 前置間隔: ${preSecForStartIdo}`);
   console.log(`IDO 存入期間 ${saveSec}`);
   console.log(`IDO 結束期間 ${endForEndIdo}`);
+  console.log(`USDC 開始退款時間 ${endForEndIdoEsc}`);
+  console.log(`------------------------`);
 
   console.log(`開始計時 30 秒，請確認資訊正確`);
   await serumCmn.sleep(27000);
@@ -85,91 +106,108 @@ async function main() {
   // IDO pool
   // We use the watermelon mint address as the seed, could use something else though.
 
-  const {
-    poolSigner,
-    redeemableMintToken,
-    redeemableMint,
-    poolWatermelon,
-    poolUsdc,
-    poolAccount,
-    startIdoTs,
-    endDepositsTs,
-    endIdoTs,
-  } = await initIdoPool(
+  await initIdoPool(
+    idoName,
     watermelonMint,
     program,
     usdcMint,
     watermelonIdoAmount,
-    creatorSaleTokenAccount,
+    idoAuthoritySaleTokenAccount,
   );
 
   await serumCmn.sleep(secTrans * 100);
 
-  const poolAccountData = await program.account.poolAccount.fetch(
-    poolAccount.publicKey,
+  const [idoAccount] = await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(idoName)],
+    program.programId,
   );
+
+  console.log(`Ido Account :" ${idoAccount.toString()}`);
+
+  const poolAccountData = await program.account.idoAccount.fetch(idoAccount);
+
+  const buffer = Buffer.from(poolAccountData.idoName as ArrayBuffer);
+  console.log(`Ido Name :" ${buffer.toString()}`);
+  console.log(`Bumps: ${JSON.stringify(poolAccountData.bumps)}`);
+  console.log(`USDC Mint :" ${poolAccountData.usdcMint.toString()}`);
   console.log(
     `Redeemable Mint: " ${poolAccountData.redeemableMint.toString()}`,
-  );
-  console.log(
-    `Pool Watermelon: " ${poolAccountData.poolWatermelon.toString()}`,
   );
   console.log(
     `Watermelon Mint: " ${poolAccountData.watermelonMint.toString()}`,
   );
   console.log(`Pool Usdc: " ${poolAccountData.poolUsdc.toString()}`);
   console.log(
-    `Distribution Authority: " ${poolAccountData.distributionAuthority.toString()}`,
+    `Pool Watermelon: " ${poolAccountData.poolWatermelon.toString()}`,
   );
+  console.log(
+    `Watermelon Mint: " ${poolAccountData.watermelonMint.toString()}`,
+  );
+  console.log(`ido Authority: " ${poolAccountData.idoAuthority.toString()}`);
 
   console.log(`Num Ido Tokens: " ${poolAccountData.numIdoTokens.toNumber()}`);
-  console.log(`Start Ido Ts: " ${poolAccountData.startIdoTs.toNumber()}`);
-  console.log(`End DepositsTs: " ${poolAccountData.endDepositsTs.toNumber()}`);
-  console.log(`End Ido Ts: " ${poolAccountData.endIdoTs.toNumber()}`);
+  console.log(
+    `Start Ido Ts: " ${poolAccountData.idoTimes.startIdo.toNumber()}`,
+  );
+  console.log(
+    `End DepositsTs: " ${poolAccountData.idoTimes.endDeposits.toNumber()}`,
+  );
+  console.log(`End Ido Ts: " ${poolAccountData.idoTimes.endIdo.toNumber()}`);
+  console.log(
+    `End Escrow Ts: " ${poolAccountData.idoTimes.endEscrow.toNumber()}`,
+  );
 
   console.log(`------------------------`);
   console.log('success!');
 }
 
 async function initIdoPool(
+  idoName: string,
   watermelonMint: anchor.web3.PublicKey,
   program: anchor.Program,
   usdcMint: anchor.web3.PublicKey,
   watermelonIdoAmount: anchor.BN,
-  creatorWatermelon: anchor.web3.PublicKey,
+  idoAuthorityWatermelon: anchor.web3.PublicKey,
 ) {
   console.log(`------------------------`);
 
-  const [_poolSigner, nonce] = await anchor.web3.PublicKey.findProgramAddress(
-    [watermelonMint.toBuffer()],
-    program.programId,
-  );
-  const poolSigner = _poolSigner;
+  const bumps = new Bumps();
 
-  console.log(
-    `與 IDO 合約交互的簽名地址(Pool Signer): ${poolSigner.toString()}`,
-  );
-  // Redeemable 是一種證明使用者將資金存入 IDO 池中的 TOKEN
-  // Pool doesn't need a Redeemable SPL token account because it only
-  // burns and mints redeemable tokens, it never stores them.
-  const redeemableMintToken = await createMint(provider, poolSigner);
-  const redeemableMint = redeemableMintToken.publicKey;
+  const [idoAccount, idoAccountBump] =
+    await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from(idoName)],
+      program.programId,
+    );
+  bumps.idoAccount = idoAccountBump;
 
-  const poolWatermelon = await createTokenAccount(
-    provider,
-    watermelonMint,
-    poolSigner,
-  );
+  const [redeemableMint, redeemableMintBump] =
+    await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from(idoName), Buffer.from('redeemable_mint')],
+      program.programId,
+    );
+  bumps.redeemableMint = redeemableMintBump;
+
+  const [poolWatermelon, poolWatermelonBump] =
+    await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from(idoName), Buffer.from('pool_watermelon')],
+      program.programId,
+    );
+  bumps.poolWatermelon = poolWatermelonBump;
+
+  const [poolUsdc, poolUsdcBump] =
+    await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from(idoName), Buffer.from('pool_usdc')],
+      program.programId,
+    );
+  bumps.poolUsdc = poolUsdcBump;
+
   console.log(`Pool Watermelon Token Account: ${poolWatermelon.toString()}`);
-
-  const poolUsdc = await createTokenAccount(provider, usdcMint, poolSigner);
   console.log(`Pool USDC Token Account: ${poolUsdc.toString()}`);
 
-  const poolAccount = anchor.web3.Keypair.generate();
-  console.log(`Pool Account PublicKey: ${poolAccount.publicKey.toString()}`);
-  console.log(`Pool Account SecretKey: ${poolAccount.secretKey.toString()}`);
+  const now = Date.now() / 1000;
+  console.log(`現在時間: ${now}`);
 
-  const nowBn = new anchor.BN(saleTime + secTrans);
+  const nowBn = new anchor.BN(now + secTrans);
 
   // 開始 IDO 時間 = 現在時間 + 緩衝時間
   const startIdoTs = nowBn.add(new anchor.BN(preSecForStartIdo));
@@ -183,80 +221,63 @@ async function initIdoPool(
   const endIdoTs = startIdoTs.add(new anchor.BN(endForEndIdo));
   console.log(`Ido 結束時間: ${endIdoTs.toNumber()}`);
 
+  const endIdoEscTs = startIdoTs.add(new anchor.BN(endForEndIdoEsc));
+  console.log(`USDC 延遲取出結束時間 : ${endIdoEscTs.toNumber()}`);
+
+  const idoTimes = new IdoTimes();
+
+  idoTimes.startIdo = startIdoTs;
+  idoTimes.endDeposits = endDepositsTs;
+  idoTimes.endIdo = endIdoTs;
+  idoTimes.endEscrow = endIdoEscTs;
+
   // Atomically create the new account and initialize it with the program.
   // 注意 WatermelonIdoAmount 銷售數量
-  await program.rpc.initializePool(
-    watermelonIdoAmount,
-    nonce,
-    startIdoTs,
-    endDepositsTs,
-    endIdoTs,
-    {
-      accounts: {
-        poolAccount: poolAccount.publicKey,
-        poolSigner,
-        distributionAuthority: provider.wallet.publicKey,
-        creatorWatermelon,
-        redeemableMint,
-        usdcMint,
-        poolWatermelon,
-        poolUsdc,
-        tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+  try {
+    await program.rpc.initializePool(
+      idoName,
+      bumps,
+      watermelonIdoAmount,
+      idoTimes,
+      {
+        accounts: {
+          idoAuthority: provider.wallet.publicKey,
+          idoAuthorityWatermelon,
+          idoAccount,
+          watermelonMint,
+          usdcMint,
+          redeemableMint,
+          poolWatermelon,
+          poolUsdc,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
       },
-      signers: [poolAccount],
-      instructions: [
-        await program.account.poolAccount.createInstruction(poolAccount),
-      ],
-    },
-  );
+    );
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
 
-  await serumCmn.sleep(secTrans * 1000);
+  await sleep(secTrans * 1000);
   const pool_watermelon_account = await getTokenAccount(
     provider,
     poolWatermelon,
   );
-  const creators_watermelon_account = await getTokenAccount(
+  const idoAuthority_watermelon_account = await getTokenAccount(
     provider,
-    creatorWatermelon,
+    idoAuthorityWatermelon,
   );
 
   console.log(
     `此次 IDO 銷售數量（pool）為: ${pool_watermelon_account.amount.toNumber()}`,
   );
   console.log(
-    `銷售者的 Watermelon Token Account（因為提交了 IDO, 所以餘額應該減少）: ${creatorWatermelon.toString()}, mint: ${
-      creators_watermelon_account.mint
-    } amount: ${creators_watermelon_account.amount.toNumber()}`,
+    `銷售者的 Watermelon Token Account（因為提交了 IDO, 所以餘額應該減少）: ${idoAuthorityWatermelon.toString()}, mint: ${
+      idoAuthority_watermelon_account.mint
+    } amount: ${idoAuthority_watermelon_account.amount.toNumber()}`,
   );
-  return {
-    poolSigner,
-    redeemableMintToken,
-    redeemableMint,
-    poolWatermelon,
-    poolUsdc,
-    poolAccount,
-    startIdoTs,
-    endDepositsTs,
-    endIdoTs,
-  };
-}
-
-async function createMint(provider: anchor.Provider, authority: any) {
-  if (authority === undefined) {
-    authority = provider.wallet.publicKey;
-  }
-  const mint = await spl.Token.createMint(
-    provider.connection,
-    (provider.wallet as any).payer,
-    authority,
-    null,
-    6,
-    TokenInstructions.TOKEN_PROGRAM_ID,
-  );
-
-  return mint;
 }
 
 export function getRegistryProgram(provider: anchor.Provider): anchor.Program {
@@ -273,6 +294,19 @@ export function getRegistryProgram(provider: anchor.Provider): anchor.Program {
   const registry = new anchor.Program(idl, registryProgramId, provider);
 
   return registry;
+}
+
+export async function findTokenAccount(
+  wallet: anchor.web3.PublicKey,
+): Promise<anchor.web3.PublicKey> {
+  const associatedPublicKey = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    watermelonMint,
+    wallet,
+  );
+
+  return associatedPublicKey;
 }
 
 main().then(

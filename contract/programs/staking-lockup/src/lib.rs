@@ -1,6 +1,6 @@
 //! A relatively advanced example of a lockup program. If you're new to Anchor,
 //! it's suggested to start with the other examples.
-
+//! 
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
 use anchor_lang::solana_program::instruction::Instruction;
@@ -210,18 +210,18 @@ pub struct Auth<'info> {
 pub struct CreateVesting<'info> {
     // Vesting.
     #[account(zero)]
-    vesting: Account<'info, Vesting>,
+    pub vesting: Account<'info, Vesting>,
     #[account(mut)]
-    vault: Account<'info, TokenAccount>,
+    pub vault: Account<'info, TokenAccount>,
     // Depositor.
     #[account(mut)]
-    depositor: AccountInfo<'info>,
+    pub depositor: AccountInfo<'info>,
     #[account(signer)]
-    depositor_authority: AccountInfo<'info>,
+    pub depositor_authority: AccountInfo<'info>,
     // Misc.
     #[account(constraint = token_program.key == &token::ID)]
-    token_program: AccountInfo<'info>,
-    clock: Sysvar<'info, Clock>,
+    pub token_program: AccountInfo<'info>,
+    pub clock: Sysvar<'info, Clock>,
 }
 
 impl<'info> CreateVesting<'info> {

@@ -499,13 +499,19 @@ mod staking_registry {
             &[ctx.accounts.cmn.vendor.nonce],
         ];
         let signer = &[&seeds[..]];
-        let mut remaining_accounts: &[AccountInfo] = ctx.remaining_accounts;
+        let remaining_accounts: &[AccountInfo] = ctx.remaining_accounts;
         let cpi_program = ctx.accounts.lockup_program.clone();
-        let cpi_accounts = CreateVesting::try_accounts(
-            ctx.accounts.lockup_program.key,
-            &mut remaining_accounts,
-            &[],
-        )?;
+        let cpi_accounts = {
+            let accs = &mut remaining_accounts.iter();
+            staking_lockup::cpi::accounts::CreateVesting {
+                vesting: next_account_info(accs)?.to_account_info(),
+                vault: next_account_info(accs)?.to_account_info(),
+                depositor: next_account_info(accs)?.to_account_info(),
+                depositor_authority: next_account_info(accs)?.to_account_info(),
+                token_program: next_account_info(accs)?.to_account_info(),
+                clock: next_account_info(accs)?.to_account_info(),
+            }
+        };
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         staking_lockup::cpi::create_vesting(
             cpi_ctx,
