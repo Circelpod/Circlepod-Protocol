@@ -15,6 +15,6 @@ anchor-deprecated-state = []
 default = ["anchor-deprecated-state"]
 
 [dependencies]
-anchor-lang = "0.16.1"
-anchor-spl = "0.16.1"
+anchor-lang = "0.17.0"
+anchor-spl = "0.17.0"
 staking-lockup = { path = "../staking-lockup", features = ["cpi"] }
