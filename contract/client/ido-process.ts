@@ -778,7 +778,7 @@ async function user1PayUSDCJoinIDO(
   );
   await provider.send(createUserUsdcTrns);
 
-  await sleep(secTrans * 1000);
+  await sleep(secTrans * 1500);
 
   await usdcMintAccount.mintTo(
     userUsdc,

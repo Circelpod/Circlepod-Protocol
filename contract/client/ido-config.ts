@@ -3,6 +3,7 @@ import {NodeWallet} from '@project-serum/common';
 import * as serumCmn from '@project-serum/common';
 import {AccountInfo, Token, TOKEN_PROGRAM_ID} from '@solana/spl-token';
 import crypto from 'crypto';
+import {TokenInstructions} from '@project-serum/serum';
 
 export class Bumps {
   idoAccount: number | undefined;
@@ -66,7 +67,7 @@ export async function createMint(
     authority,
     null,
     6,
-    TOKEN_PROGRAM_ID,
+    TokenInstructions.TOKEN_PROGRAM_ID,
   );
 
   return mint;
@@ -80,7 +81,7 @@ export async function createTokenAccount(
   const token = new Token(
     provider.connection,
     mint,
-    TOKEN_PROGRAM_ID,
+    TokenInstructions.TOKEN_PROGRAM_ID,
     (provider.wallet as any).payer,
   );
   const vault = await token.createAccount(owner);
