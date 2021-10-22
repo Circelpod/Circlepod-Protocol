@@ -24,10 +24,12 @@ export const isTest = process.env.NODE_ENV === 'test';
 
 const niceDay = 1636676100; // 2021/11/12 08:15 AM +0800
 
-export const saleTime = isProd ? niceDay / 1000 : Date.now() / 1000;
+export const saleTime = isProd ? niceDay : Date.now() / 1000;
 
 // TODO: 如果是正式環境，請確認這是正確的銷售數量
-export const idoAmount = isProd ? 5 * Math.pow(10, 6) : 5 * Math.pow(10, 4);
+export const idoAmount = isProd
+  ? 15854577.09 * Math.pow(10, 6)
+  : 15854577.09 * Math.pow(10, 4);
 
 // TODO: 如果是正式環境，請確認這是正確的銷售目標
 const watermelonMintString = isProd
@@ -42,7 +44,7 @@ const usdcMintString = isProd
 export const usdcMint = new anchor.web3.PublicKey(usdcMintString);
 
 export const secTrans = isProd ? 20 : 20;
-export const preSecForStartIdo = isProd ? 60 * 10 : 60 * 3; // 60 * 10 10Min;
+export const preSecForStartIdo = isProd ? 0 : 60 * 5; // 60 * 10 10Min;
 export const saveSec = isProd ? 60 * 60 * 24 : 60 * 60 * 1; // 60 * 60 * 24 24H
 export const endForEndIdo = isProd ? saveSec * 2 : saveSec * 2; // 60 * 60 * 24 * 2 48H
 export const endForEndIdoEsc = isProd ? saveSec * 7 : saveSec * 7; // 60 * 60 * 24 * 7 7D
