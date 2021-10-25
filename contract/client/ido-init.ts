@@ -62,7 +62,7 @@ async function main() {
     `USDC 開始退款時間: ${new Date(escrowUsdcTs * 1000).toUTCString()}`,
   );
   console.log(
-    `銷售數量: ${idoAmount / (isProd ? Math.pow(10, 6) : Math.pow(10, 4))}`,
+    `銷售數量: ${idoAmount / (isProd ? Math.pow(10, 6) : Math.pow(10, 6))}`,
   );
   console.log(`------------------------`);
   console.log(`銷售幣種 Mint: ${watermelonMint}`);

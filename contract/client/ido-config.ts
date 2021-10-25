@@ -29,22 +29,22 @@ export const saleTime = isProd ? niceDay : Date.now() / 1000;
 // TODO: 如果是正式環境，請確認這是正確的銷售數量
 export const idoAmount = isProd
   ? 15854577.09 * Math.pow(10, 6)
-  : 15854577.09 * Math.pow(10, 4);
+  : 5 * Math.pow(10, 6);
 
 // TODO: 如果是正式環境，請確認這是正確的銷售目標
 const watermelonMintString = isProd
   ? 'CPXDs2uhNwDKAt9V3vXvtspv9U7rsQ2fVr1qAUDmuCaq'
-  : '5QhsyriyneDvoZCt9Cji5GyrXRZ1pfBoj372PQbZ3eVz';
+  : 'CPXDs2uhNwDKAt9V3vXvtspv9U7rsQ2fVr1qAUDmuCaq';
 export const watermelonMint = new anchor.web3.PublicKey(watermelonMintString);
 
 // TODO: 如果是正式環境，請確認這是正確的 USDC
 const usdcMintString = isProd
-  ? 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-  : 'USDJcm54FNVW2VfqNwAFnHv1BTRFoFr9zCzfrtQbHxX';
+  ? 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' // USDC on main-beta
+  : 'USDJcm54FNVW2VfqNwAFnHv1BTRFoFr9zCzfrtQbHxX'; // USDC on devnet
 export const usdcMint = new anchor.web3.PublicKey(usdcMintString);
 
 export const secTrans = isProd ? 20 : 20;
-export const preSecForStartIdo = isProd ? 0 : 60 * 5; // 60 * 10 10Min;
+export const preSecForStartIdo = isProd ? 0 : 60 * 30; // 60 * 10 10Min;
 export const saveSec = isProd ? 60 * 60 * 24 : 60 * 60 * 1; // 60 * 60 * 24 24H
 export const endForEndIdo = isProd ? saveSec * 2 : saveSec * 2; // 60 * 60 * 24 * 2 48H
 export const endForEndIdoEsc = isProd ? saveSec * 7 : saveSec * 7; // 60 * 60 * 24 * 7 7D
