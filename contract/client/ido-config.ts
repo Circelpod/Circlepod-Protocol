@@ -28,7 +28,7 @@ export const saleTime = isProd ? niceDay : Date.now() / 1000;
 
 // TODO: 如果是正式環境，請確認這是正確的銷售數量
 export const idoAmount = isProd
-  ? 15854577.09 * Math.pow(10, 6)
+  ? 26424295.15 * Math.pow(10, 6)
   : 5 * Math.pow(10, 6);
 
 // TODO: 如果是正式環境，請確認這是正確的銷售目標
@@ -44,10 +44,10 @@ const usdcMintString = isProd
 export const usdcMint = new anchor.web3.PublicKey(usdcMintString);
 
 export const secTrans = isProd ? 20 : 20;
-export const preSecForStartIdo = isProd ? 0 : 60 * 30; // 60 * 10 10Min;
-export const saveSec = isProd ? 60 * 60 * 24 : 60 * 60 * 1; // 60 * 60 * 24 24H
-export const endForEndIdo = isProd ? saveSec * 2 : saveSec * 2; // 60 * 60 * 24 * 2 48H
-export const endForEndIdoEsc = isProd ? saveSec * 7 : saveSec * 7; // 60 * 60 * 24 * 7 7D
+export const preSecForStartIdo = isProd ? 0 : 60 * 12; // 60 * 10 10Min;
+export const saveSec = isProd ? 60 * 60 * 48 : 60 * 60 * 0.6; // 60 * 60 * 48 48H
+export const endForEndIdo = isProd ? saveSec * 1.5 : saveSec * 1.2; // 60 * 60 * 24 * 1.5 72H
+export const endForEndIdoEsc = isProd ? saveSec * 1.6 : saveSec * 1.25; // 60 * 60 * 24 * 1.6 76.8H
 
 export async function getTokenAccount(
   provider: anchor.Provider,
