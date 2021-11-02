@@ -47,28 +47,22 @@ async function main() {
   );
   console.log(`------------------------`);
   console.log(`銷售開始基準時間: ${new Date(saleTime * 1000).toUTCString()}`);
+
+  const saleStartTs = saleTime + preSecForStartIdo;
+  console.log(`銷售開始時間: ${new Date(saleStartTs * 1000).toUTCString()}`);
+
+  const lastSaveTs = saleTime + preSecForStartIdo + saveSec;
+  console.log(`最後存入時間: ${new Date(lastSaveTs * 1000).toUTCString()}`);
+
+  const saleEndTs = saleTime + preSecForStartIdo + endForEndIdo;
+  console.log(`銷售結束時間: ${new Date(saleEndTs * 1000).toUTCString()}`);
+
+  const escrowUsdcTs = saleTime + preSecForStartIdo + endForEndIdoEsc;
   console.log(
-    `銷售開始時間: ${new Date(
-      (saleTime + preSecForStartIdo) * 1000,
-    ).toUTCString()}`,
+    `USDC 開始退款時間: ${new Date(escrowUsdcTs * 1000).toUTCString()}`,
   );
   console.log(
-    `最後存入時間: ${new Date(
-      (saleTime + preSecForStartIdo + saveSec) * 1000,
-    ).toUTCString()}`,
-  );
-  console.log(
-    `銷售結束時間: ${new Date(
-      (saleTime + preSecForStartIdo + endForEndIdo) * 1000,
-    ).toUTCString()}`,
-  );
-  console.log(
-    `USDC 開始退款時間: ${new Date(
-      (saleTime + preSecForStartIdo + endForEndIdoEsc) * 1000,
-    ).toUTCString()}`,
-  );
-  console.log(
-    `銷售數量: ${idoAmount / (isProd ? Math.pow(10, 6) : Math.pow(10, 4))}`,
+    `銷售數量: ${idoAmount / (isProd ? Math.pow(10, 6) : Math.pow(10, 6))}`,
   );
   console.log(`------------------------`);
   console.log(`銷售幣種 Mint: ${watermelonMint}`);
@@ -108,6 +102,10 @@ async function main() {
 
   await initIdoPool(
     idoName,
+    saleStartTs,
+    lastSaveTs,
+    saleEndTs,
+    escrowUsdcTs,
     watermelonMint,
     program,
     usdcMint,
@@ -163,6 +161,10 @@ async function main() {
 
 async function initIdoPool(
   idoName: string,
+  saleStartTs: number,
+  lastSaveTs: number,
+  saleEndTs: number,
+  escrowUsdcTs: number,
   watermelonMint: anchor.web3.PublicKey,
   program: anchor.Program,
   usdcMint: anchor.web3.PublicKey,
@@ -204,24 +206,25 @@ async function initIdoPool(
   console.log(`Pool Watermelon Token Account: ${poolWatermelon.toString()}`);
   console.log(`Pool USDC Token Account: ${poolUsdc.toString()}`);
 
-  const now = Date.now() / 1000;
-  console.log(`現在時間: ${now}`);
-
-  const nowBn = new anchor.BN(now + secTrans);
+  console.log(
+    `銷售開始時間: ${saleStartTs} ${new Date(
+      saleStartTs * 1000,
+    ).toLocaleString()}`,
+  );
 
   // 開始 IDO 時間 = 現在時間 + 緩衝時間
-  const startIdoTs = nowBn.add(new anchor.BN(preSecForStartIdo));
+  const startIdoTs = new anchor.BN(saleStartTs);
   console.log(`Ido 開始時間: ${startIdoTs.toNumber()}`);
 
   // 結束存入時間 = 開始時間 + 存入期間
-  const endDepositsTs = startIdoTs.add(new anchor.BN(saveSec));
+  const endDepositsTs = new anchor.BN(lastSaveTs);
   console.log(`Ido 存入結束時間: ${endDepositsTs.toNumber()}`);
 
   // 結束 IDO 時間 = 開始時間 + (整體活動時間 = 存入期間 * 2)
-  const endIdoTs = startIdoTs.add(new anchor.BN(endForEndIdo));
+  const endIdoTs = new anchor.BN(saleEndTs);
   console.log(`Ido 結束時間: ${endIdoTs.toNumber()}`);
 
-  const endIdoEscTs = startIdoTs.add(new anchor.BN(endForEndIdoEsc));
+  const endIdoEscTs = new anchor.BN(escrowUsdcTs);
   console.log(`USDC 延遲取出結束時間 : ${endIdoEscTs.toNumber()}`);
 
   const idoTimes = new IdoTimes();
